@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Hotseat</title>
+<style>
+  :root{
+    --bg1:#081a3a;
+    --bg2:#102a5b;
+    --ink:#f8fbff;
+    --muted:#c8d5ef;
+    --card:rgba(255,255,255,.10);
+    --line:rgba(255,255,255,.18);
+    --accent:#ffd84d;
+    --accent2:#64e6d3;
+    --accent3:#ff7c9d;
+    --accent4:#8f7cff;
+    --danger:#ff5f6d;
+    --shadow:0 30px 80px rgba(0,0,0,.32);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;min-height:100%;font-family:Inter,ui-rounded,"SF Pro Rounded","Segoe UI",Arial,sans-serif;background:#081a3a;color:var(--ink)}
+  body{
+    min-height:100vh;
+    overflow-x:hidden;
+    background:
+      radial-gradient(circle at 15% 20%, rgba(100,230,211,.22), transparent 28%),
+      radial-gradient(circle at 84% 22%, rgba(143,124,255,.24), transparent 30%),
+      radial-gradient(circle at 70% 84%, rgba(255,124,157,.16), transparent 30%),
+      linear-gradient(145deg,var(--bg1),var(--bg2));
+  }
+  body::before,body::after{content:"";position:fixed;border-radius:999px;filter:blur(2px);opacity:.35;pointer-events:none}
+  body::before{width:320px;height:320px;background:#21d4b4;top:-170px;left:-100px}
+  body::after{width:380px;height:380px;background:#7e67ff;right:-180px;bottom:-190px}
+
+  .app{min-height:100vh;display:flex;flex-direction:column;padding:24px clamp(18px,3vw,42px);position:relative;z-index:1}
+  .topbar{display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap}
+  .brand{display:flex;align-items:center;gap:12px}
+  .logo{width:54px;height:54px;border-radius:18px;display:grid;place-items:center;background:linear-gradient(145deg,var(--accent),#ffb932);color:#17203c;font-size:28px;box-shadow:0 12px 30px rgba(0,0,0,.22)}
+  .title{font-size:clamp(26px,3vw,42px);font-weight:900;letter-spacing:-.04em;line-height:1}
+  .sub{color:var(--muted);font-size:14px;margin-top:6px}
+  .top-actions{display:flex;gap:10px;flex-wrap:wrap}
+
+  button{border:0;font:inherit;cursor:pointer;transition:transform .16s ease,filter .16s ease,background .2s ease,box-shadow .2s ease}
+  button:active{transform:translateY(1px) scale(.99)}
+  button:focus-visible,textarea:focus-visible{outline:4px solid rgba(255,216,77,.35);outline-offset:3px}
+  .btn{min-height:48px;border-radius:16px;padding:0 18px;font-weight:800;color:#f7fbff;background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.16);backdrop-filter:blur(10px)}
+  .btn:hover{background:rgba(255,255,255,.16);transform:translateY(-1px)}
+  .btn-primary{background:linear-gradient(135deg,var(--accent),#ffb72f);color:#1e2742;border:0;box-shadow:0 10px 28px rgba(255,190,52,.25)}
+  .btn-primary:hover{filter:brightness(1.06)}
+
+  .stage{flex:1;display:grid;place-items:center;padding:clamp(26px,5vh,64px) 0 26px}
+  .game-card{width:min(1220px,96vw);min-height:min(68vh,760px);border:1px solid var(--line);background:linear-gradient(180deg,rgba(255,255,255,.13),rgba(255,255,255,.07));backdrop-filter:blur(16px);border-radius:36px;box-shadow:var(--shadow);display:flex;flex-direction:column;overflow:hidden;position:relative}
+  .game-card::before{content:"";position:absolute;inset:0;background:linear-gradient(110deg,rgba(255,255,255,.07),transparent 38%,rgba(255,255,255,.03));pointer-events:none}
+
+  .status-row{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;padding:26px 28px 10px;position:relative;z-index:1}
+  .pill{padding:10px 15px;border-radius:999px;background:rgba(6,18,45,.42);border:1px solid rgba(255,255,255,.14);font-weight:800;font-size:14px;color:#e9f2ff}
+  .pill strong{color:var(--accent)}
+
+  .word-zone{flex:1;display:grid;place-items:center;text-align:center;padding:28px clamp(22px,5vw,70px);position:relative;z-index:1}
+  .word-wrap{width:100%}
+  .eyebrow{font-size:clamp(16px,1.6vw,24px);font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:var(--accent2);margin-bottom:20px}
+  .word{font-size:clamp(68px,11vw,170px);font-weight:1000;line-height:.92;letter-spacing:-.055em;text-wrap:balance;word-break:break-word;text-shadow:0 8px 28px rgba(0,0,0,.28);animation:wordIn .45s cubic-bezier(.2,.9,.2,1)}
+  .helper{margin:26px auto 0;max-width:760px;color:var(--muted);font-size:clamp(16px,1.8vw,24px);line-height:1.5}
+
+  .controls{display:flex;justify-content:center;align-items:center;gap:14px;flex-wrap:wrap;padding:10px 24px 30px;position:relative;z-index:1}
+  .control{min-height:58px;border-radius:18px;padding:0 26px;font-size:18px;font-weight:900}
+  .next{background:linear-gradient(135deg,var(--accent2),#3bc4f5);color:#0e2544;box-shadow:0 12px 30px rgba(69,209,215,.22)}
+  .skip{background:linear-gradient(135deg,var(--accent3),#ff9f6b);color:#2d1730;box-shadow:0 12px 30px rgba(255,124,157,.18)}
+  .reveal{background:linear-gradient(135deg,var(--accent4),#aa99ff);color:white;box-shadow:0 12px 30px rgba(143,124,255,.22)}
+
+  .setup{position:fixed;inset:0;background:rgba(3,10,27,.72);backdrop-filter:blur(12px);display:none;place-items:center;padding:20px;z-index:10}
+  .setup.open{display:grid}
+  .setup-card{width:min(760px,96vw);max-height:88vh;overflow:auto;background:#102653;border:1px solid rgba(255,255,255,.16);border-radius:28px;padding:28px;box-shadow:0 30px 90px rgba(0,0,0,.5)}
+  .setup-card h2{font-size:32px;margin:0 0 8px}
+  .setup-card p{margin:0 0 18px;color:var(--muted);line-height:1.5}
+  textarea{width:100%;min-height:270px;resize:vertical;border-radius:20px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.08);color:white;padding:18px;font:600 18px/1.5 inherit}
+  .setup-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:16px;flex-wrap:wrap}
+
+  .toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(18px);opacity:0;background:rgba(3,13,32,.94);border:1px solid rgba(255,255,255,.15);color:white;padding:13px 18px;border-radius:15px;font-weight:800;transition:.25s ease;z-index:20;pointer-events:none}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  @keyframes wordIn{from{opacity:0;transform:scale(.82) translateY(14px);filter:blur(7px)}to{opacity:1;transform:scale(1) translateY(0);filter:blur(0)}}
+  @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.035)}}
+  .pulse{animation:pulse .35s ease}
+
+  @media (max-width:700px){
+    .app{padding:16px}
+    .sub{display:none}
+    .logo{width:48px;height:48px}
+    .game-card{min-height:70vh;border-radius:26px}
+    .word{font-size:clamp(56px,18vw,104px)}
+    .controls{padding:6px 16px 22px}
+    .control{flex:1 1 145px;padding:0 15px}
+  }
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="topbar">
+    <div class="brand">
+      <div class="logo" aria-hidden="true">🔥</div>
+      <div>
+        <div class="title">Hotseat</div>
+        <div class="sub">Describe the word without saying it.</div>
+      </div>
+    </div>
+    <div class="top-actions">
+      <button class="btn" id="editBtn" type="button">Edit Words</button>
+      <button class="btn btn-primary" id="shuffleBtn" type="button">Shuffle</button>
+    </div>
+  </div>
+
+  <main class="stage">
+    <section class="game-card" aria-live="polite">
+      <div class="status-row">
+        <div class="pill">Word <strong id="counter">1 / 12</strong></div>
+        <div class="pill">Remaining <strong id="remaining">11</strong></div>
+      </div>
+
+      <div class="word-zone">
+        <div class="word-wrap">
+          <div class="eyebrow" id="eyebrow">Hotseat Word</div>
+          <div class="word" id="wordDisplay">Heritage</div>
+          <div class="helper" id="helper">Give clues, examples, actions or descriptions — but don’t say the word itself.</div>
+        </div>
+      </div>
+
+      <div class="controls">
+        <button class="control skip" id="prevBtn" type="button">← Previous</button>
+        <button class="control reveal" id="hideBtn" type="button">Hide Word</button>
+        <button class="control next" id="nextBtn" type="button">Next Word →</button>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div class="setup" id="setup" aria-hidden="true">
+  <div class="setup-card" role="dialog" aria-modal="true" aria-labelledby="setupTitle">
+    <h2 id="setupTitle">Edit Hotseat Words</h2>
+    <p>Enter one word or phrase per line. Blank lines are ignored.</p>
+    <textarea id="wordInput" spellcheck="false"></textarea>
+    <div class="setup-actions">
+      <button class="btn" id="cancelBtn" type="button">Cancel</button>
+      <button class="btn btn-primary" id="saveBtn" type="button">Save Words</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+(() => {
+  const defaultWords = [
+    'Heritage','Ancestor','Artifact','Innovation','Irrigation','Viewpoint',
+    'Tradition','Culture','Pioneer','Celebrate','Community','Generation'
+  ];
+
+  let words = [...defaultWords];
+  let index = 0;
+  let hidden = false;
+
+  const wordDisplay = document.getElementById('wordDisplay');
+  const counter = document.getElementById('counter');
+  const remaining = document.getElementById('remaining');
+  const helper = document.getElementById('helper');
+  const eyebrow = document.getElementById('eyebrow');
+  const hideBtn = document.getElementById('hideBtn');
+  const nextBtn = document.getElementById('nextBtn');
+  const prevBtn = document.getElementById('prevBtn');
+  const shuffleBtn = document.getElementById('shuffleBtn');
+  const editBtn = document.getElementById('editBtn');
+  const setup = document.getElementById('setup');
+  const wordInput = document.getElementById('wordInput');
+  const saveBtn = document.getElementById('saveBtn');
+  const cancelBtn = document.getElementById('cancelBtn');
+  const toast = document.getElementById('toast');
+
+  function animateWord(){
+    wordDisplay.style.animation='none';
+    void wordDisplay.offsetWidth;
+    wordDisplay.style.animation='wordIn .45s cubic-bezier(.2,.9,.2,1)';
+  }
+
+  function render(){
+    const word = words[index] || 'Add some words';
+    wordDisplay.textContent = hidden ? '••••••' : word;
+    eyebrow.textContent = hidden ? 'Word Hidden' : 'Hotseat Word';
+    helper.textContent = hidden
+      ? 'The word is hidden. Click “Show Word” when you are ready.'
+      : 'Give clues, examples, actions or descriptions — but don’t say the word itself.';
+    hideBtn.textContent = hidden ? 'Show Word' : 'Hide Word';
+    counter.textContent = `${Math.min(index+1,words.length)} / ${words.length}`;
+    remaining.textContent = Math.max(words.length-index-1,0);
+    animateWord();
+  }
+
+  function showToast(message){
+    toast.textContent = message;
+    toast.classList.add('show');
+    clearTimeout(showToast.t);
+    showToast.t = setTimeout(() => toast.classList.remove('show'), 1300);
+  }
+
+  nextBtn.addEventListener('click', () => {
+    if(!words.length) return;
+    index = (index + 1) % words.length;
+    hidden = false;
+    render();
+  });
+
+  prevBtn.addEventListener('click', () => {
+    if(!words.length) return;
+    index = (index - 1 + words.length) % words.length;
+    hidden = false;
+    render();
+  });
+
+  hideBtn.addEventListener('click', () => {
+    hidden = !hidden;
+    render();
+  });
+
+  shuffleBtn.addEventListener('click', () => {
+    for(let i=words.length-1;i>0;i--){
+      const j=Math.floor(Math.random()*(i+1));
+      [words[i],words[j]]=[words[j],words[i]];
+    }
+    index=0;
+    hidden=false;
+    render();
+    showToast('Words shuffled');
+  });
+
+  editBtn.addEventListener('click', () => {
+    wordInput.value = words.join('\n');
+    setup.classList.add('open');
+    setup.setAttribute('aria-hidden','false');
+    setTimeout(() => wordInput.focus(), 20);
+  });
+
+  cancelBtn.addEventListener('click', closeSetup);
+  setup.addEventListener('click', (e) => { if(e.target===setup) closeSetup(); });
+
+  function closeSetup(){
+    setup.classList.remove('open');
+    setup.setAttribute('aria-hidden','true');
+    editBtn.focus();
+  }
+
+  saveBtn.addEventListener('click', () => {
+    const nextWords = wordInput.value.split(/\r?\n/).map(v=>v.trim()).filter(Boolean).slice(0,100);
+    if(!nextWords.length){
+      showToast('Add at least one word');
+      return;
+    }
+    words=nextWords;
+    index=0;
+    hidden=false;
+    render();
+    closeSetup();
+    showToast('Word list updated');
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if(setup.classList.contains('open')){
+      if(e.key==='Escape') closeSetup();
+      return;
+    }
+    if(e.key==='ArrowRight' || e.key===' '){ e.preventDefault(); nextBtn.click(); }
+    if(e.key==='ArrowLeft'){ e.preventDefault(); prevBtn.click(); }
+    if(e.key.toLowerCase()==='h'){ hideBtn.click(); }
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>

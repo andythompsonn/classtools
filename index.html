@@ -1,0 +1,1036 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Y5A Tasks</title>
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+<div class="site-controls" id="siteControls" aria-label="Site controls" hidden>
+  <div class="profile-control">
+    <button class="profile-avatar" id="profileAvatarBtn" type="button" aria-label="Profile">?</button>
+    <div class="profile-menu" id="profileMenu" hidden>
+      <strong id="profileNameLabel"></strong>
+      <button class="secondary small" id="profileManageWordsBtn" type="button">Manage word lists</button>
+      <button class="secondary small" id="profileAddStudentsBtn" type="button">Manage student lists</button>
+      <div class="avatar-picker-label">Choose avatar</div>
+      <div class="avatar-picker" id="avatarPicker" aria-label="Choose animal avatar"></div>
+      <button class="secondary small" id="profileChangePasswordBtn" type="button">Change password</button>
+      <button class="secondary small" id="logoutBtn" type="button">Log out</button>
+    </div>
+  </div>
+</div>
+<dialog class="login-dialog" id="loginDialog">
+  <form id="loginForm">
+    <div class="dialog-body">
+      <h2>Welcome to Y5A Classroom Hub</h2>
+      <p>Sign in to use your own saved classroom data.</p>
+      <label>Username <input id="loginUsername" autocomplete="username" required></label>
+      <label>Password <input id="loginPassword" type="password" autocomplete="current-password" required></label>
+      <p class="dialog-error" id="loginError" aria-live="polite"></p>
+      <div class="dialog-actions"><span></span><div><button class="secondary" id="createAccountBtn" type="button">Create account</button> <button class="primary" type="submit">Log in</button></div></div>
+    </div>
+  </form>
+</dialog>
+<dialog id="profilePasswordDialog">
+  <form class="dialog-body" id="profilePasswordForm">
+    <h3>Change login password</h3>
+    <label>Current password <input id="profileCurrentPassword" type="password" required></label>
+    <label>New password <input id="profileNewPassword" type="password" minlength="4" required></label>
+    <label>Confirm new password <input id="profileConfirmPassword" type="password" minlength="4" required></label>
+    <p class="dialog-error" id="profilePasswordError" aria-live="polite"></p>
+    <div class="dialog-actions"><span></span><div><button class="secondary" id="cancelProfilePasswordBtn" type="button">Cancel</button> <button class="primary" type="submit">Save password</button></div></div>
+  </form>
+</dialog>
+<div class="project-shell">
+  <section class="main-page" id="mainPage">
+    <div class="main-hero">
+      <h1 data-i18n-en="Your Classroom Hub">Your Classroom Hub</h1>
+      <p data-i18n-en="Open the tools you use for your class. More sections can be added here later.">
+        Open the tools you use for your class. More sections can be added here later.
+      </p>
+
+      <div class="main-app-grid">
+        <button class="main-app-card" id="openTasksPageBtn" type="button">
+          <span class="main-app-card-icon" aria-hidden="true">✓</span>
+          <strong data-i18n-en="Tasks">Tasks</strong>
+          <span data-i18n-en="Open your student and teacher task checklist, archive, table view, notes, timer, and more.">
+            Open your student and teacher task checklist, archive, table view, notes, timer, and more.
+          </span>
+        </button>
+
+        <button class="main-app-card" id="openGamesPageBtn" type="button">
+          <span class="main-app-card-icon" aria-hidden="true">🎮</span>
+          <strong data-i18n-en="Games">Games</strong>
+          <span data-i18n-en="Classroom games and activities can be added here.">
+            Classroom games and activities can be added here.
+          </span>
+        </button>
+
+        <button class="main-app-card" id="openToolsPageBtn" type="button">
+          <span class="main-app-card-icon" aria-hidden="true">🧰</span>
+          <strong>Tools</strong>
+          <span>Classroom clocks, timers, and helpful teaching tools.</span>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <section class="main-page" id="toolsPage" hidden>
+    <button class="persistent-back" id="toolsBackToMainBtn" type="button">← Back to Main</button>
+    <div class="main-hero">
+      <h1>Tools</h1>
+      <p>A home for classroom clocks, timers, and future teaching utilities.</p>
+      <div class="main-app-grid">
+        <div class="main-app-card tools-timer-card">
+          <span class="main-app-card-icon" aria-hidden="true">⏱</span>
+          <strong>Classroom timer</strong>
+          <span>Set a countdown, start it, or reset it for your class.</span>
+          <div id="toolsTimerMount"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="main-page" id="gamesPage" hidden>
+    <button class="persistent-back" id="gamesBackToMainBtn" type="button" data-i18n-en="Back to Main">
+      ← Back to Main
+    </button>
+
+    <div class="main-hero">
+      <h1 data-i18n-en="Games">Games</h1>
+      <p data-i18n-en="Classroom games and activities can be added here.">
+        Classroom games and activities can be added here.
+      </p>
+
+      <div class="games-finder task-search-wrap" role="search">
+        <input class="task-search-input" id="gameSearchInput" type="search" placeholder="Search for a game..." autocomplete="off" aria-label="Search games">
+        <button class="secondary small" id="clearGameSearchBtn" type="button">Clear</button>
+        <div class="games-view-controls" aria-label="Game layout">
+          <button class="secondary small is-active" id="gamesGridViewBtn" type="button" aria-pressed="true">Grid</button>
+          <button class="secondary small" id="gamesListViewBtn" type="button" aria-pressed="false">List</button>
+        </div>
+      </div>
+      <p class="games-search-empty" id="gamesSearchEmpty" hidden>No games match that search.</p>
+
+      <div class="main-app-grid games-grid" id="gamesGrid">
+        <button class="main-app-card" data-game-card data-game-search="wordle word spelling letters" id="openWordlePageBtn" type="button">
+          <span class="main-app-card-icon" aria-hidden="true">🟩</span>
+          <strong data-i18n-en="Wordle">Wordle</strong>
+          <span data-i18n-en="Guess the five-letter word in six tries using the classroom keyboard.">
+            Guess the five-letter word in six tries using the classroom keyboard.
+          </span>
+        </button>
+
+        <button class="main-app-card" data-game-card data-game-search="sentence definition guess vocabulary word" id="openSentenceGuessPageBtn" type="button">
+          <span class="main-app-card-icon" aria-hidden="true">💬</span>
+          <strong data-i18n-en="Sentence / Definition Guess">Sentence / Definition Guess</strong>
+          <span data-i18n-en="Students read a sentence or definition and try to guess the hidden word.">
+            Students read a sentence or definition and try to guess the hidden word.
+          </span>
+        </button>
+
+        <button class="main-app-card" data-game-card data-game-search="spin wheel random names choices class list" id="openSpinWheelPageBtn" type="button">
+          <span class="main-app-card-icon" aria-hidden="true">🎡</span>
+          <strong>Spin the Wheel</strong>
+          <span>Enter names, words, questions, or any choices, then spin to choose one at random.</span>
+        </button>
+
+        <button class="main-app-card" data-game-card data-game-search="shark word quest spelling letters ocean guess" id="openSharkWordPageBtn" type="button">
+          <span class="main-app-card-icon" aria-hidden="true">🦈</span>
+          <strong>Shark Word Quest</strong>
+          <span>Use letter clues to solve the hidden word before the bubble meter fills up.</span>
+        </button>
+
+        <button class="main-app-card" data-game-card data-game-search="hotseat hot seat vocabulary words definition sentence" id="openHotseatPageBtn" type="button">
+          <span class="main-app-card-icon" aria-hidden="true">🔥</span>
+          <strong>Hotseat</strong>
+          <span>Reveal a big word card from a saved list for a fast-paced classroom guessing game.</span>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <section class="wordle-page" id="sentenceGuessPage" hidden>
+    <button class="persistent-back" id="sentenceGuessBackToGamesBtn" type="button">
+      ← <span data-i18n-en="Back to Games">Back to Games</span>
+    </button>
+    <button class="wordle-nav-secondary" id="sentenceGuessBackToMainBtn" type="button" data-i18n-en="Main Page">
+      ⌂ Main Page
+    </button>
+
+    <div class="wordle-shell">
+      <div class="wordle-header">
+        <h1 data-i18n-en="Sentence / Definition Guess">Sentence / Definition Guess</h1>
+        <p data-i18n-en="Students read a sentence or definition and try to guess the hidden word.">
+          Students read a sentence or definition and try to guess the hidden word.
+        </p>
+      </div>
+
+      <div class="main-hero" style="width:min(100%,720px);padding:26px;text-align:center;">
+        <div style="font-size:54px;margin-bottom:10px;" aria-hidden="true">💬</div>
+        <h2 style="margin:0 0 8px;" data-i18n-en="Ready for the next classroom game">Ready for the next classroom game</h2>
+        <p style="margin:0 auto;max-width:560px;" data-i18n-en="This page is ready for us to add the clue, answer reveal, scoring, teams, and other guessing-game controls.">
+          This page is ready for us to add the clue, answer reveal, scoring, teams, and other guessing-game controls.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section class="wordle-page" id="spinWheelPage" hidden>
+    <button class="persistent-back" id="spinWheelBackToGamesBtn" type="button">← Back to Games</button>
+    <button class="wordle-nav-secondary" id="spinWheelBackToMainBtn" type="button">⌂ Main Page</button>
+
+    <div class="wheel-game-layout">
+      <div class="wheel-game-stage">
+        <div class="wordle-header">
+          <h1>Spin the Wheel</h1>
+          <p>Click the centre button to randomly choose an entry.</p>
+        </div>
+        <div class="wheel-pointer" aria-hidden="true"></div>
+        <div class="wheel-disc-wrap" id="spinWheelDisc">
+          <canvas id="spinWheelCanvas" width="720" height="720" aria-label="Spin the Wheel"></canvas>
+          <button class="spin-centre-button" id="spinWheelBtn" type="button">SPIN</button>
+        </div>
+        <p class="wheel-result" id="spinWheelResult" aria-live="polite">Add at least two entries to begin.</p>
+      </div>
+
+      <aside class="wheel-editor" aria-label="Wheel entries">
+        <h2>Wheel entries</h2>
+        <p>Paste or type entries separated by spaces, commas, or new lines.</p>
+        <div class="wheel-single-entry">
+          <input id="wheelSingleEntryInput" type="text" placeholder="Add one name or entry">
+          <button class="primary" id="addSingleWheelEntryBtn" type="button">Add</button>
+        </div>
+        <textarea id="wheelEntriesInput" rows="5" placeholder="Alice, Ben, Chloe&#10;David Emma"></textarea>
+        <div class="wheel-editor-actions">
+          <button class="primary" id="addWheelEntriesBtn" type="button">Add entries</button>
+          <button class="secondary" id="clearWheelEntriesBtn" type="button">Clear all</button>
+        </div>
+        <div class="wheel-import-controls">
+          <label for="wheelGroupSelect">Import group</label>
+          <select id="wheelGroupSelect"></select>
+          <button class="secondary wheel-import-roster" id="importRosterToWheelBtn" type="button">Import class list</button>
+        </div>
+        <div class="wheel-entry-count" id="wheelEntryCount">0 entries</div>
+        <div class="wheel-entry-list" id="wheelItemList"></div>
+      </aside>
+    </div>
+  </section>
+
+  <section class="wordle-page" id="wordlePage" hidden>
+    <button class="persistent-back" id="wordleBackToGamesBtn" type="button">
+      ← <span data-i18n-en="Back to Games">Back to Games</span>
+    </button>
+    <button class="wordle-nav-secondary" id="wordleBackToMainBtn" type="button" data-i18n-en="Main Page">
+      ⌂ Main Page
+    </button>
+
+    <div class="wordle-shell">
+      <div class="wordle-header">
+        <h1>WORDLE</h1>
+        <p data-i18n-en="Guess the five-letter word in six tries. Tap the keyboard below to enter letters.">
+          Guess the five-letter word in six tries. Tap the keyboard below to enter letters.
+        </p>
+      </div>
+
+      <div class="wordle-controls">
+        <button class="secondary small" id="wordleNewGameBtn" type="button" data-i18n-en="New Word">New Word</button>
+        <button class="secondary small" id="wordleRevealBtn" type="button" data-i18n-en="Reveal Word">Reveal Word</button>
+      </div>
+
+      <div class="wordle-message" id="wordleMessage" aria-live="polite"></div>
+
+      <div class="wordle-board" id="wordleBoard" aria-label="Wordle board"></div>
+
+      <div class="wordle-help">
+        <div class="wordle-help-item">
+          <span class="wordle-help-square correct" aria-hidden="true"></span>
+          <span data-i18n-en="Correct letter and position">Correct letter and position</span>
+        </div>
+        <div class="wordle-help-item">
+          <span class="wordle-help-square present" aria-hidden="true"></span>
+          <span data-i18n-en="Correct letter, wrong position">Correct letter, wrong position</span>
+        </div>
+        <div class="wordle-help-item">
+          <span class="wordle-help-square absent" aria-hidden="true"></span>
+          <span data-i18n-en="Letter is not in the word">Letter is not in the word</span>
+        </div>
+      </div>
+
+      <div class="wordle-keyboard" id="wordleKeyboard" aria-label="Wordle keyboard"></div>
+    </div>
+  </section>
+
+  <section class="wordle-page" id="sharkWordPage" hidden>
+    <button class="persistent-back" id="sharkWordBackToGamesBtn" type="button">← Back to Games</button>
+    <button class="wordle-nav-secondary" id="sharkWordBackToMainBtn" type="button">⌂ Main Page</button>
+    <div class="wordle-shell shark-word-shell">
+      <div class="wordle-header">
+        <h1>Shark Word Quest</h1>
+        <p>Choose letters to uncover the mystery word. Every missed letter adds a bubble to the wave meter.</p>
+      </div>
+      <div class="wordle-controls">
+        <button class="secondary small" id="sharkWordNewGameBtn" type="button">New Word</button>
+        <button class="secondary small" id="sharkWordRevealBtn" type="button">Reveal Word</button>
+      </div>
+      <div class="shark-word-import">
+        <label for="sharkWordGroupSelect">Word list</label>
+        <select id="sharkWordGroupSelect"></select>
+        <button class="secondary small" id="importSharkWordGroupBtn" type="button">Import word list</button>
+      </div>
+      <div class="shark-word-scene" aria-label="Friendly shark and bubble meter">
+        <div class="shark-word-character" aria-hidden="true">🦈</div>
+        <div class="shark-word-bubbles" id="sharkWordBubbles" aria-hidden="true"></div>
+        <div class="shark-word-meter"><span id="sharkWordMisses">0</span> of 8 bubbles</div>
+      </div>
+      <div class="wordle-message" id="sharkWordMessage" aria-live="polite"></div>
+      <div class="shark-word-display" id="sharkWordDisplay" aria-label="Hidden word"></div>
+      <div class="shark-word-guesses" id="sharkWordGuesses">Guessed letters: none</div>
+      <div class="wordle-keyboard" id="sharkWordKeyboard" aria-label="Shark Word Quest keyboard"></div>
+    </div>
+  </section>
+
+  <section class="wordle-page" id="hotseatPage" hidden>
+    <button class="persistent-back" id="hotseatBackToGamesBtn" type="button">← Back to Games</button>
+    <button class="wordle-nav-secondary" id="hotseatBackToMainBtn" type="button">⌂ Main Page</button>
+    <div class="wordle-shell hotseat-shell">
+      <div class="wordle-header"><h1>Hotseat</h1><p>Choose a word list, then reveal one large word at a time.</p></div>
+      <div class="hotseat-setup" id="hotseatSetup">
+        <label>Word list <select id="hotseatWordGroupSelect"></select></label>
+        <div class="hotseat-options">
+          <label><input id="hotseatShowDefinition" type="checkbox" checked> Show definition</label>
+          <label><input id="hotseatShowSentence" type="checkbox" checked> Show example sentence</label>
+        </div>
+        <button class="primary hotseat-start" id="hotseatStartBtn" type="button">Start Hotseat</button>
+        <p class="hotseat-status" id="hotseatStatus"></p>
+      </div>
+      <div class="hotseat-card" id="hotseatCard" hidden>
+        <div class="hotseat-card-label">Guess the word</div>
+        <div class="hotseat-word" id="hotseatWord"></div>
+        <div class="hotseat-definition" id="hotseatDefinition"></div>
+        <div class="hotseat-sentence" id="hotseatSentence"></div>
+        <button class="primary hotseat-next" id="hotseatNextBtn" type="button">Next word →</button>
+        <button class="secondary small" id="hotseatRestartBtn" type="button">Change list</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="tasks-page" id="tasksPage" hidden>
+    <button class="persistent-back" id="backToMainBtn" type="button" data-i18n-en="Back to Main">
+      ← Back to Main
+    </button>
+<div class="app">
+  
+
+  <section class="admin-panel" id="adminPanel" hidden>
+    <div class="admin-panel-head">
+      <div>
+        <strong>Settings</strong>
+        <div class="admin-panel-note">Teacher controls are hidden from the main student view.</div>
+      </div>
+      <button class="secondary small" id="closeAdminBtn" type="button">Close</button>
+    </div>
+
+    <div class="admin-sections">
+      <div class="admin-section">
+        <div class="admin-section-title">Checklist Controls</div>
+        <div class="toolbar admin-toolbar">
+          <button class="secondary" id="editStudentsBtn">Edit Students</button>
+          <button class="secondary" id="timestampToggleBtn" type="button">Completion Timestamps: Off</button>
+          <button class="danger-btn" id="resetBtn">Reset checklist</button>
+        </div>
+      </div>
+
+      <div class="admin-section">
+        <div class="admin-section-title">Import/Export Data</div>
+        <div class="toolbar admin-toolbar">
+          <button class="secondary" id="transferDataBtn">Copy / Paste Data</button>
+          <button class="secondary" id="exportBtn">Export backup</button>
+          <button class="secondary" id="importBtn">Import backup</button>
+          <input class="hidden-file" type="file" id="importFile" accept=".json,application/json" />
+        </div>
+      </div>
+
+      <div class="admin-section">
+        <div class="admin-section-title">Live JSON Save</div>
+        <div class="json-save-status" id="jsonSaveStatus">
+          <span class="json-save-dot"></span>
+          <span id="jsonSaveStatusText">No JSON file connected</span>
+        </div>
+        <div class="toolbar admin-toolbar">
+          <button class="secondary" id="connectJsonFileBtn" type="button">Choose JSON Save File</button>
+          <button class="secondary" id="saveJsonNowBtn" type="button" disabled>Save JSON Now</button>
+          <button class="secondary" id="disconnectJsonFileBtn" type="button" disabled>Disconnect</button>
+        </div>
+        <div class="admin-panel-note json-save-note">
+          Once connected, the checklist, archived tasks, and Version History are automatically written to this JSON file. Browser storage is kept as a backup.
+        </div>
+      </div>
+
+      <div class="admin-section">
+        <div class="admin-section-title">Security</div>
+        <div class="toolbar admin-toolbar">
+          <button class="secondary" id="changePasswordBtn" type="button">Change Password</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="nav-row">
+    <div class="tabs" role="tablist" aria-label="Checklist views">
+      <button class="tab-btn active" id="checklistTabBtn" data-tab="checklistPanel">Checklist View</button>
+      <button class="tab-btn" id="tableTabBtn" data-tab="tablePanel">Table View</button>
+    </div>
+    <div class="admin-bar">
+      <button class="top-icon-btn language-toggle-btn"
+              id="languageToggleBtn"
+              type="button"
+              aria-label="Switch language"
+              title="Switch to Chinese">
+        中
+      </button>
+      <button class="top-icon-btn lock-icon-btn"
+              id="lockTableBtn"
+              type="button"
+              aria-label="Lock mode"
+              title="Lock mode">
+        🔓
+      </button>
+      <button class="top-icon-btn history-icon-btn"
+              id="versionHistoryBtn"
+              type="button"
+              aria-label="Open version history"
+              title="Version History">
+        ↶
+      </button>
+      <button class="top-icon-btn archive-icon-btn"
+              id="archiveBtn"
+              type="button"
+              aria-label="Open archive"
+              title="Archive">
+        📦
+      </button>
+      <button class="top-icon-btn admin-toggle"
+              id="adminToggleBtn"
+              type="button"
+              aria-expanded="false"
+              aria-controls="adminPanel"
+              aria-label="Open settings menu"
+              title="Settings">
+        ⚙
+      </button>
+    </div>
+  </div>
+
+  <section class="tab-panel active" id="checklistPanel">
+    <section class="panel summary">
+      <div class="panel-head">
+        <h2 id="attentionHeading">No unfinished work <span class="attention-success-tick">✓</span></h2>
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+          <div id="summaryCount" class="progress"></div>
+          <button class="secondary attention-toggle-btn"
+                  id="attentionToggleBtn"
+                  type="button"
+                  aria-expanded="true"
+                  title="Minimise students needing attention">
+            −
+          </button>
+        </div>
+      </div>
+      <div class="attention-wrap">
+        <div id="attentionText"></div>
+        <div class="attention-list" id="attentionList"></div>
+      </div>
+    </section>
+
+    <main class="tasks" id="tasks"></main>
+  </section>
+
+  <section class="tab-panel" id="tablePanel">
+    <div class="table-shell">
+      <div class="panel-head">
+        <h2>Student Tasks Overview</h2>
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+          <div class="progress">Tick boxes here or in Checklist View — both stay synced.</div>
+          <button class="secondary small" id="fullscreenTableBtn" type="button">⛶ <span data-i18n-en="Full Screen">Full Screen</span></button>
+        </div>
+      </div>
+      <div class="table-filter-row">
+        <div class="student-task-subtabs"
+             id="tableTaskFilters"
+             role="tablist"
+             aria-label="Table task type">
+          <button type="button"
+                  class="student-task-subtab active"
+                  data-i18n-en="All Tasks"
+                  data-table-task-filter="all">
+            All Tasks
+          </button>
+          <button type="button"
+                  class="student-task-subtab"
+                  data-i18n-en="Classwork"
+                  data-table-task-filter="classwork">
+            Classwork
+          </button>
+          <button type="button"
+                  class="student-task-subtab"
+                  data-i18n-en="Homework"
+                  data-table-task-filter="homework">
+            Homework
+          </button>
+        </div>
+
+        <div class="table-status-legend" aria-label="Task status colours">
+          <span class="table-status-legend-item">
+            <span class="table-status-dot overdue" aria-hidden="true"></span>
+            Overdue
+          </span>
+          <span class="table-status-legend-item">
+            <span class="table-status-dot pending" aria-hidden="true"></span>
+            To Do
+          </span>
+        </div>
+      </div>
+      <div class="table-summary"><span id="tableSummary"></span><span class="table-scale-note" id="tableScaleNote"></span></div>
+      <div class="table-scroll" id="tableView"></div>
+    </div>
+  </section>
+</div>
+
+
+  <section class="admin-feedback-page" id="feedbackAdminPage" hidden>
+    <button class="persistent-back" id="feedbackAdminBackBtn" type="button">
+      ← <span data-i18n-en="Back to Main">Back to Main</span>
+    </button>
+
+    <div class="main-hero">
+      <h1 data-i18n-en="Admin Panel">Admin Panel</h1>
+      <p data-i18n-en="Review feedback submitted from anywhere in the project.">
+        Review feedback submitted from anywhere in the project.
+      </p>
+
+      <div class="admin-feedback-list" id="adminFeedbackList"></div>
+    </div>
+  </section>
+
+
+  </section>
+</div>
+
+  <section class="update-log-page" id="updateLogPage" hidden>
+    <button class="persistent-back" id="updateLogBackBtn" type="button">
+      ← <span data-i18n-en="Back to Main">Back to Main</span>
+    </button>
+
+    <div class="main-hero">
+      <h1 data-i18n-en="Update Log">Update Log</h1>
+      <p data-i18n-en="A record of major features and smaller changes made to this project.">
+        A record of major features and smaller changes made to this project.
+      </p>
+
+      <div class="update-log-list">
+        <article class="update-log-card">
+          <div class="update-log-version">v1.1.7 <span class="update-log-date">24-09-2026</span></div>
+          <ul><li>Added clear outlines and focus states to form fields across the website.</li><li>Added date stamps to new Update Log entries.</li><li>Added profile login-password changes from the avatar menu with current-password and confirmation checks.</li><li>Added an avatar picker to the profile menu so users can change their animal avatar at any time.</li><li>Added named student groups: create class lists such as P5A, switch between them in the student editor, and import a selected group into Spin the Wheel.</li><li>Moved student-group management to a dedicated page, including rename and delete controls.</li><li>Moved the student-list shortcut to the top of the profile menu.</li><li>Added named Word Lists with individual adding, editing, deleting, and comma/newline importing, ready for future game imports.</li><li>Added definition and example-sentence fields for every word-list entry.</li><li>Added Hotseat as a separate game file with word-list selection, optional definitions and sentences, and large next-word cards.</li><li>Added game search plus grid and list layouts on the Games page.</li><li>Restyled the Games search to match the task-list search control, including a clear button.</li><li>Added Shark Word Quest: a friendly ocean-themed hidden-word game with the Wordle-style keyboard and bubble meter.</li><li>Added the shark swim and bubble animations, with reduced-motion support.</li><li>Added Word List imports to Shark Word Quest, including support for imported phrases.</li></ul>
+        </article>
+        <article class="update-log-card">
+          <div class="update-log-version">v1.1.6</div>
+          <ul><li>Added 30 randomly assigned themed cartoon-animal profile avatars.</li></ul>
+        </article>
+        <article class="update-log-card">
+          <div class="update-log-version">v1.1.5</div>
+          <ul><li>Made the profile student roster a shared data source and added class-list import to Spin the Wheel.</li></ul>
+        </article>
+        <article class="update-log-card">
+          <div class="update-log-version">v1.1.4</div>
+          <ul><li>Added the full class-list student importer to the persistent profile menu.</li></ul>
+        </article>
+        <article class="update-log-card">
+          <div class="update-log-version">v1.1.3</div>
+          <ul><li>Made the “How Your Data Is Saved” notice closable by button, ×, Escape, or clicking outside.</li></ul>
+        </article>
+        <article class="update-log-card">
+          <div class="update-log-version">v1.1.2</div>
+          <ul><li>Made the JSON setup prompt closable and show only once per profile.</li></ul>
+        </article>
+        <article class="update-log-card">
+          <div class="update-log-version">v1.1.1</div>
+          <ul>
+            <li>Added local profile login, remembered sessions, avatar menu, and logout.</li>
+            <li>Each profile now keeps separate task, feedback, language, settings, and wheel data.</li>
+            <li>Added a dedicated single-name field to Spin the Wheel.</li>
+          </ul>
+        </article>
+        <article class="update-log-card">
+          <div class="update-log-version">v1.1.0</div>
+          <ul>
+            <li>Added Spin the Wheel as a new classroom game.</li>
+            <li>Teachers can add entries in batches or one name at a time, then edit or delete them.</li>
+            <li>The wheel randomly selects an entry using the central Spin button.</li>
+            <li>Moved all game entry pages into the games folder for clearer website hosting.</li>
+          </ul>
+        </article>
+
+        <article class="update-log-card">
+          <div class="update-log-version">v1.0.2</div>
+          <ul>
+            <li>Made the Chinese language and Settings buttons persistent across the website.</li>
+            <li>Restored clear borders around the main navigation buttons.</li>
+            <li>Corrected the Update Log so it opens at the top of the page.</li>
+          </ul>
+        </article>
+
+        <article class="update-log-card">
+          <div class="update-log-version">v1.0.1 and earlier</div>
+          <ul>
+            <li>Reset the public version number and introduced the new versioning system.</li>
+            <li>Added the Update Log page and footer link.</li>
+            <li>Changed the footer so it no longer covers page content.</li>
+            <li>Added the Main Page and Tasks sub-page navigation.</li>
+            <li>Added the Games section.</li>
+            <li>Added Wordle with a clickable keyboard and scoring.</li>
+            <li>Added the Sentence / Definition Guess game page.</li>
+            <li>Added Report feedback capture and the Admin feedback page.</li>
+            <li>Added the unfinished-students-only task filter.</li>
+            <li>Added English / Chinese interface support.</li>
+            <li>Added JSON backup, archive, version history, timer, and task management tools.</li>
+          </ul>
+        </article>
+      </div>
+    </div>
+  </section>
+
+<footer class="app-footer">
+  <div>Designed by Andy · <span data-app-version>v1.1.7</span></div>
+  <div class="footer-actions">
+    <button class="footer-link" id="reportIssueBtn" type="button" data-i18n-en="Report">Report</button>
+    <button class="footer-link" id="openFeedbackAdminBtn" type="button" data-i18n-en="Admin Panel">Admin Panel</button>
+    <button class="footer-link" id="openUpdateLogBtn" type="button" data-i18n-en="Update Log">Update Log</button>
+  </div>
+</footer>
+
+<button class="floating-timer-launcher"
+        id="floatingTimerLauncher"
+        type="button"
+        aria-label="Open classroom timer"
+        title="Classroom timer">
+  ⏱
+</button>
+
+<section class="floating-timer-panel"
+         id="floatingTimerPanel"
+         aria-label="Classroom timer"
+         hidden>
+  <div class="floating-timer-head" id="floatingTimerDragHandle">
+    <div class="floating-timer-title">Classroom Timer</div>
+    <div class="floating-timer-head-actions">
+      <button class="secondary"
+              id="floatingTimerDisplayOnlyBtn"
+              type="button"
+              aria-label="Show timer only"
+              title="Show timer only"
+              hidden>
+        ◫
+      </button>
+      <button class="secondary"
+              id="floatingTimerCloseBtn"
+              type="button"
+              aria-label="Close timer"
+              title="Close timer">
+        ×
+      </button>
+    </div>
+  </div>
+
+  <div class="floating-timer-body">
+    <div class="floating-timer-display"
+         id="floatingTimerDisplay"
+         title="Drag to move the timer">
+      05:00
+    </div>
+
+    <button class="floating-timer-reveal"
+            id="floatingTimerRevealBtn"
+            type="button"
+            aria-label="Show timer settings"
+            title="Show timer settings">
+      ⚙
+    </button>
+
+    <div class="floating-timer-controls">
+      <button class="primary" id="floatingTimerStartBtn" type="button">Start</button>
+      <button class="secondary" id="floatingTimerResetBtn" type="button">Reset</button>
+    </div>
+
+    <div class="floating-timer-scale">
+      <div class="floating-timer-scale-top">
+        <span>Time</span>
+        <span class="floating-timer-scale-value" id="floatingTimerScaleValue">5 min</span>
+      </div>
+      <input class="floating-timer-range"
+             id="floatingTimerRange"
+             type="range"
+             min="30"
+             max="3600"
+             step="30"
+             value="300"
+             aria-label="Choose timer length" />
+      <div class="floating-timer-range-labels">
+        <span>30 sec</span>
+        <span>15 min</span>
+        <span>30 min</span>
+        <span>60 min</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="student-manager-page" id="studentManagerPage" hidden>
+  <button class="persistent-back" id="studentManagerBackBtn" type="button">← Back to Main</button>
+  <div class="student-manager-shell">
+    <h1>Student groups</h1>
+    <p>Set up named groups such as P5A, then use them throughout the classroom tools.</p>
+    <div class="student-group-controls">
+      <label>Student group <select id="studentGroupSelect"></select></label>
+      <input id="newStudentGroupName" type="text" placeholder="New group name, e.g. P5A">
+      <button class="secondary small" id="addStudentGroupBtn" type="button">Add group</button>
+      <button class="secondary small" id="renameStudentGroupBtn" type="button">Rename group</button>
+      <button class="danger-btn small" id="deleteStudentGroupBtn" type="button">Delete group</button>
+    </div>
+    <p>Add, remove, rename, or batch import students here. Changes update the class list across all tasks, while keeping existing student progress where possible.</p>
+    <div class="batch-student-panel" id="batchStudentPanel" hidden>
+      <h4>Add Batch Students</h4>
+      <p>
+        Paste a class list with one student per line. Best format:
+        <strong>student number, Chinese name, English name</strong>.
+        Tabs, commas, copied spreadsheet columns, and even a whole class pasted on one continuous line are supported.
+      </p>
+      <textarea class="batch-student-textarea"
+                id="batchStudentText"
+                spellcheck="false"
+                placeholder="1    伊茉溱    Jasmine&#10;2    何以然    Chloe He&#10;3    徐芯爱    Alicia&#10;&#10;Also supported: 1伊茉溱Jasmine2何以然Chloe He3徐芯爱Alicia"></textarea>
+      <div class="batch-student-actions">
+        <div class="batch-student-message" id="batchStudentMessage"></div>
+        <div class="right-actions">
+          <button class="secondary small" id="cancelBatchStudentsBtn" type="button">Cancel</button>
+          <button class="primary small" id="applyBatchStudentsBtn" type="button">Done</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="roster-list" id="rosterList"></div>
+    <div class="dialog-actions">
+      <div class="left-actions">
+        <button class="secondary" id="addStudentBtn">+ Add student</button>
+        <button class="secondary" id="addBatchStudentsBtn">+ Add Batch Students</button>
+      </div>
+      <div class="right-actions">
+        <button class="secondary" id="cancelRosterBtn">Back to Main</button>
+        <button class="primary" id="saveRosterBtn">Save students</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="student-manager-page" id="wordManagerPage" hidden>
+  <button class="persistent-back" id="wordManagerBackBtn" type="button">← Back to Main</button>
+  <div class="student-manager-shell">
+    <h1>Word lists</h1>
+    <p>Create named word groups now, ready to import into selected games in a future update.</p>
+    <div class="student-group-controls">
+      <label>Word group <select id="wordGroupSelect"></select></label>
+      <input id="newWordGroupName" type="text" placeholder="New group name, e.g. Ocean words">
+      <button class="secondary small" id="addWordGroupBtn" type="button">Add group</button>
+      <button class="secondary small" id="renameWordGroupBtn" type="button">Rename group</button>
+      <button class="danger-btn small" id="deleteWordGroupBtn" type="button">Delete group</button>
+    </div>
+    <div class="word-entry-controls">
+      <input id="newWordInput" type="text" placeholder="Word or phrase">
+      <input id="newWordDefinitionInput" type="text" placeholder="Definition (optional)">
+      <input id="newWordSentenceInput" type="text" placeholder="Example sentence (optional)">
+      <button class="secondary" id="addSingleWordBtn" type="button">Add word</button>
+      <button class="secondary" id="showWordImportBtn" type="button">Import words</button>
+    </div>
+    <div class="batch-student-panel" id="wordImportPanel" hidden>
+      <h4>Import words, definitions, and sentences</h4>
+      <p>Use <strong>W:</strong> for a word, <strong>D:</strong> for its definition, and <strong>S:</strong> for its example sentence. Start each new entry with W:.</p>
+      <textarea class="batch-student-textarea" id="wordImportText" spellcheck="false" placeholder="W: ocean&#10;D: a very large area of salt water&#10;S: The ocean was calm today.&#10;&#10;W: coral&#10;D: a hard, colourful sea animal colony&#10;S: Coral grows in warm seas."></textarea>
+      <div class="batch-student-actions"><div id="wordImportMessage" class="batch-student-message"></div><div class="right-actions"><button class="secondary small" id="cancelWordImportBtn" type="button">Cancel</button><button class="primary small" id="applyWordImportBtn" type="button">Import words, definitions, sentences</button></div></div>
+    </div>
+    <p class="word-list-help">Each saved entry can include a word, its definition, and an example sentence.</p>
+    <div class="word-entry-list" id="wordEntryList"></div>
+  </div>
+</section>
+
+<dialog id="studentDetailDialog">
+  <div class="dialog-body">
+    <h3 id="studentDetailName">Student</h3>
+    <p id="studentDetailSummary"></p>
+    <div id="studentDetailContent"></div>
+    <div class="dialog-actions">
+      <div></div>
+      <div class="right-actions">
+        <button class="primary" id="closeStudentDetailBtn">Close</button>
+      </div>
+    </div>
+  </div>
+</dialog>
+
+<dialog id="dataTransferDialog">
+  <div class="dialog-body">
+    <h3>Transfer checklist data</h3>
+    <p>
+      Copy this data into a future version of the checklist, or paste data from an older version here.
+      Tasks, student names, ticks, and collapsed task states are included.
+    </p>
+    <textarea id="dataTransferText"
+      style="width:100%;min-height:260px;border:1px solid var(--line);border-radius:10px;padding:12px;resize:vertical;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;"
+      spellcheck="false"></textarea>
+    <div id="dataTransferMessage" style="margin-top:10px;color:var(--muted);font-size:14px;"></div>
+    <div class="dialog-actions">
+      <div class="left-actions">
+        <button class="secondary" id="copyDataBtn">Copy data</button>
+      </div>
+      <div class="right-actions">
+        <button class="secondary" id="cancelDataTransferBtn">Close</button>
+        <button class="primary" id="applyDataBtn">Import pasted data</button>
+      </div>
+    </div>
+  </div>
+</dialog>
+
+<dialog id="unlockDialog">
+  <form class="dialog-body" id="unlockForm">
+    <h3 id="unlockDialogTitle">Unlock</h3>
+    <p id="unlockDialogText">Enter the password to unlock teacher controls.</p>
+
+    <label style="display:block;font-weight:650;margin-bottom:6px;" for="unlockPassword">
+      Password
+    </label>
+    <input
+      id="unlockPassword"
+      type="password"
+      autocomplete="current-password"
+      placeholder="Enter password"
+      style="width:100%;border:1px solid var(--line);border-radius:10px;padding:11px 12px;font-size:16px;"
+    />
+
+    <div id="unlockError"
+         style="min-height:20px;margin-top:8px;color:var(--danger);font-size:13px;"
+         aria-live="polite"></div>
+
+    <div class="dialog-actions">
+      <div></div>
+      <div class="right-actions">
+        <button class="secondary" id="cancelUnlockBtn" type="button">Cancel</button>
+        <button class="primary" type="submit">Unlock</button>
+      </div>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="studentNoteDialog">
+  <form class="dialog-body" id="studentNoteForm">
+    <h3 id="studentNoteTitle">Student note</h3>
+    <p id="studentNoteContext"></p>
+
+    <textarea
+      id="studentNoteText"
+      maxlength="180"
+      placeholder="Add a short note..."
+      style="width:100%;min-height:100px;border:1px solid var(--line);border-radius:10px;padding:10px 11px;resize:vertical;font-size:14px;"
+    ></textarea>
+
+    <div class="dialog-actions">
+      <div class="left-actions">
+        <button class="danger-btn small" id="clearStudentNoteBtn" type="button">Clear note</button>
+      </div>
+      <div class="right-actions">
+        <button class="secondary" id="cancelStudentNoteBtn" type="button">Cancel</button>
+        <button class="primary" type="submit">Save note</button>
+      </div>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="historyDialog">
+  <div class="dialog-body">
+    <div class="history-dialog-head">
+      <div>
+        <h3>Version History</h3>
+        <p>Each entry stores the checklist from immediately before that action. Click an action to restore the checklist to that point.</p>
+      </div>
+    </div>
+
+    <div class="history-list" id="historyList"></div>
+
+    <div class="dialog-actions">
+      <div class="left-actions">
+        <button class="secondary small" id="clearHistoryBtn" type="button">Clear history</button>
+      </div>
+      <div class="right-actions">
+        <button class="primary" id="closeHistoryBtn" type="button">Close</button>
+      </div>
+    </div>
+  </div>
+</dialog>
+
+<dialog id="browserStorageNoticeDialog">
+  <div class="dialog-body">
+    <button class="dialog-close" id="closeBrowserStorageNoticeX" type="button" aria-label="Close data-saving notice">×</button>
+    <h3>How Your Data Is Saved</h3>
+    <p>
+      This browser does not support automatic saving to a JSON file on your computer.
+    </p>
+    <p>
+      For live JSON saving, open this page in <strong>Google Chrome</strong> or <strong>Microsoft Edge</strong>.
+      In this browser, your checklist will still save automatically, but it is stored only inside the browser.
+    </p>
+    <p>
+      <strong>Important:</strong> if you clear this browser's cookies, website data, or storage, your saved checklist may be deleted.
+      You can still use <strong>Settings → Export backup</strong> to make a manual JSON backup.
+    </p>
+
+    <div class="dialog-actions">
+      <div></div>
+      <div class="right-actions">
+        <button class="primary" id="closeBrowserStorageNoticeBtn" type="button">I Understand</button>
+      </div>
+    </div>
+  </div>
+</dialog>
+
+<dialog id="jsonSetupDialog">
+  <div class="dialog-body">
+    <button class="dialog-close" id="closeJsonSetupBtn" type="button" aria-label="Close JSON setup">×</button>
+    <h3>Set Up JSON Save File</h3>
+    <p>
+      This checklist can automatically save its data to a JSON file on this computer.
+      The JSON includes your active tasks, archived tasks, and Version History.
+    </p>
+
+    <div class="json-setup-info">
+      <strong>Recommended file:</strong>
+      <span>Y5A Tasks Data.json</span>
+    </div>
+
+    <div class="dialog-actions">
+      <div></div>
+      <div class="right-actions">
+        <button class="secondary" id="skipJsonSetupBtn" type="button">Not Now</button>
+        <button class="primary" id="startJsonSetupBtn" type="button">Set Up JSON File</button>
+      </div>
+    </div>
+  </div>
+</dialog>
+
+<dialog id="changePasswordDialog">
+  <form method="dialog" class="dialog-body" id="changePasswordForm">
+    <h3>Change Lock Password</h3>
+    <p>Enter your current password, then enter the new password twice.</p>
+
+    <label class="password-field-label">
+      Current password
+      <input id="currentPasswordInput"
+             type="password"
+             autocomplete="current-password"
+             required />
+    </label>
+
+    <label class="password-field-label">
+      New password
+      <input id="newPasswordInput"
+             type="password"
+             autocomplete="new-password"
+             minlength="4"
+             required />
+    </label>
+
+    <label class="password-field-label">
+      Confirm new password
+      <input id="confirmNewPasswordInput"
+             type="password"
+             autocomplete="new-password"
+             minlength="4"
+             required />
+    </label>
+
+    <div class="dialog-error" id="changePasswordError" aria-live="polite"></div>
+
+    <div class="dialog-actions">
+      <div></div>
+      <div class="right-actions">
+        <button class="secondary" id="cancelChangePasswordBtn" type="button">Cancel</button>
+        <button class="primary" type="submit">Update Password</button>
+      </div>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="archiveDialog">
+  <div class="dialog-body">
+    <h3>Archive</h3>
+    <p>Completed tasks are kept here for reference and no longer appear in the active checklist.</p>
+
+    <div class="sort-dropdown-wrap archive-sort-dropdown" id="archiveSortDropdown">
+      <button type="button"
+              class="sort-dropdown-trigger sort-icon-trigger"
+              id="archiveSortTrigger"
+              aria-haspopup="menu"
+              aria-expanded="false"
+              aria-label="Sort archived tasks"
+              title="Sort archived tasks">
+        ⇅
+      </button>
+      <div class="sort-dropdown-menu" id="archiveSortMenu" role="menu">
+        <button type="button" class="active" data-archive-sort="date-added" role="menuitem">Date added</button>
+        <button type="button" data-archive-sort="alphabetical" role="menuitem">Alphabetical</button>
+        <button type="button" data-archive-sort="due-date" role="menuitem">Due date</button>
+      </div>
+    </div>
+
+    <div class="archive-list" id="archiveList"></div>
+    <div class="dialog-actions">
+      <div></div>
+      <div class="right-actions">
+        <button class="primary" id="closeArchiveBtn" type="button">Close</button>
+      </div>
+    </div>
+  </div>
+</dialog>
+
+<script defer src="js/app.js"></script>
+<dialog class="dialog report-dialog" id="reportDialog">
+  <form method="dialog" id="reportForm">
+    <div class="dialog-head">
+      <div>
+        <h3 data-i18n-en="Send Feedback">Send Feedback</h3>
+        <p data-i18n-en="Tell us what happened or what could be improved.">Tell us what happened or what could be improved.</p>
+      </div>
+    </div>
+
+    <div class="report-context-box">
+      <span class="report-context-label" data-i18n-en="Current activity">Current activity</span>
+      <span id="reportContextText"></span>
+    </div>
+
+    <textarea id="reportFeedbackText"
+              class="report-feedback-text"
+              placeholder="Write your feedback here..."
+              data-i18n-placeholder-en="Write your feedback here..."></textarea>
+
+    <div class="dialog-actions">
+      <div class="left-actions">
+        <button class="secondary" id="cancelReportBtn" type="button" data-i18n-en="Cancel">Cancel</button>
+      </div>
+      <div class="right-actions">
+        <button class="primary" id="submitReportBtn" type="submit" data-i18n-en="Submit Feedback">Submit Feedback</button>
+      </div>
+    </div>
+  </form>
+</dialog>
+
+</body>
+</html>

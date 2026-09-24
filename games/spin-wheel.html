@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Y5A Spin the Wheel</title>
+<style>
+:root{
+  --bg1:#eef7ff;--bg2:#f8f4ff;--panel:#ffffff;--text:#19324a;--muted:#6d8093;
+  --accent:#2563eb;--accent2:#7c3aed;--success:#16a34a;--danger:#dc2626;
+  --shadow:0 18px 45px rgba(31,41,55,.14);
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:Inter,ui-rounded,"SF Pro Rounded","Segoe UI",Arial,sans-serif;color:var(--text);background:linear-gradient(135deg,var(--bg1),var(--bg2));min-height:100vh}
+.app{max-width:1160px;margin:0 auto;padding:28px 20px 42px}
+.header{text-align:center;margin-bottom:22px}
+.header h1{margin:0;font-size:clamp(2rem,4vw,3.2rem);letter-spacing:-.04em}
+.header p{margin:8px 0 0;color:var(--muted);font-size:1rem}
+.layout{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(280px,.75fr);gap:24px;align-items:start}
+.card{background:rgba(255,255,255,.92);border:1px solid rgba(255,255,255,.7);border-radius:26px;box-shadow:var(--shadow);backdrop-filter:blur(8px)}
+.wheel-card{padding:26px;position:relative;overflow:hidden}
+.wheel-wrap{position:relative;max-width:670px;margin:0 auto;aspect-ratio:1/1;display:grid;place-items:center}
+.halo{position:absolute;inset:3%;border-radius:50%;background:radial-gradient(circle,rgba(37,99,235,.13),transparent 63%);filter:blur(6px);animation:breathe 3s ease-in-out infinite}
+@keyframes breathe{50%{transform:scale(1.035);opacity:.75}}
+canvas{width:92%;height:92%;display:block;filter:drop-shadow(0 18px 24px rgba(15,23,42,.18));transform:rotate(0deg)}
+.pointer{position:absolute;top:0;left:50%;transform:translateX(-50%);width:0;height:0;border-left:23px solid transparent;border-right:23px solid transparent;border-top:42px solid #ef4444;filter:drop-shadow(0 5px 4px rgba(0,0,0,.18));z-index:4;transform-origin:50% 8px}
+.pointer.tick{animation:tick .11s ease-out}
+@keyframes tick{50%{transform:translateX(-50%) rotate(-10deg)}}
+.center-cap{position:absolute;width:22%;aspect-ratio:1;border-radius:50%;background:linear-gradient(145deg,#fff,#dbeafe);border:10px solid rgba(255,255,255,.95);box-shadow:0 8px 18px rgba(15,23,42,.2);display:grid;place-items:center;font-weight:900;font-size:clamp(1rem,2.2vw,1.55rem);color:#1d4ed8;z-index:3;pointer-events:none}
+.spin-row{display:flex;justify-content:center;gap:12px;flex-wrap:wrap;margin-top:20px}
+button{border:0;border-radius:14px;padding:13px 20px;font:inherit;font-weight:800;cursor:pointer;transition:transform .18s ease,box-shadow .18s ease,opacity .18s ease}
+button:active{transform:translateY(1px) scale(.98)}
+#spinBtn{min-width:180px;background:linear-gradient(135deg,var(--accent),var(--accent2));color:white;box-shadow:0 10px 22px rgba(79,70,229,.25);font-size:1.05rem}
+#spinBtn:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 14px 28px rgba(79,70,229,.31)}
+button:disabled{cursor:not-allowed;opacity:.55}
+.secondary{background:#eff6ff;color:#1d4ed8}
+.danger{background:#fff1f2;color:#be123c}
+.side{padding:22px}
+.side h2{margin:0 0 14px;font-size:1.15rem}
+textarea{width:100%;min-height:265px;resize:vertical;border:2px solid #dbe7f3;border-radius:16px;padding:14px;font:inherit;line-height:1.5;color:var(--text);background:#fbfdff;outline:none;transition:border-color .2s,box-shadow .2s}
+textarea:focus{border-color:#60a5fa;box-shadow:0 0 0 4px rgba(96,165,250,.16)}
+.helper{font-size:.88rem;color:var(--muted);margin:9px 2px 16px}
+.side-actions{display:flex;gap:10px;flex-wrap:wrap}
+.result{margin-top:18px;min-height:102px;border-radius:18px;background:linear-gradient(135deg,#f0f9ff,#f5f3ff);display:grid;place-items:center;text-align:center;padding:18px;border:1px solid #dbeafe;position:relative;overflow:hidden}
+.result .label{font-size:.82rem;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);font-weight:900}
+.result .name{font-size:clamp(1.5rem,3vw,2.3rem);font-weight:950;margin-top:4px;word-break:break-word}
+.result.win{animation:winnerPop .55s cubic-bezier(.2,.9,.3,1.35)}
+@keyframes winnerPop{0%{transform:scale(.86);opacity:.4}65%{transform:scale(1.04)}100%{transform:scale(1);opacity:1}}
+.confetti{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.confetti i{position:absolute;width:9px;height:16px;border-radius:2px;top:-18px;animation:fall 1.5s ease-in forwards}
+@keyframes fall{to{transform:translate(var(--x),140px) rotate(var(--r));opacity:.2}}
+.status{margin-top:12px;text-align:center;color:var(--muted);font-size:.92rem;min-height:1.3em}
+@media(max-width:840px){.layout{grid-template-columns:1fr}.side{order:2}.wheel-card{padding:18px}.app{padding:18px 12px 32px}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <h1>Spin the Wheel</h1>
+    <p>Add names or choices, then spin for a random result.</p>
+  </div>
+
+  <div class="layout">
+    <section class="card wheel-card">
+      <div class="wheel-wrap">
+        <div class="halo" aria-hidden="true"></div>
+        <div class="pointer" id="pointer" aria-hidden="true"></div>
+        <canvas id="wheel" width="900" height="900" aria-label="Spin wheel"></canvas>
+        <div class="center-cap">Y5A</div>
+      </div>
+      <div class="spin-row">
+        <button id="spinBtn" type="button">🎯 Spin the Wheel</button>
+      </div>
+      <div class="status" id="status" aria-live="polite"></div>
+    </section>
+
+    <aside class="card side">
+      <h2>Wheel entries</h2>
+      <textarea id="entries" aria-label="Wheel entries" spellcheck="false">Adaline
+Adrian
+Alicia
+Angela
+Ariana
+Charlotte
+Chloe H.
+Chloe W.
+Claire
+Elena
+Eric
+Ethan
+Evelyn
+Franky
+Gil
+Hannah
+James
+Jasmine
+Jayden
+Jiale
+Kenneth
+Leo
+Lily
+Oliver
+Sophia
+Victoria
+Luna</textarea>
+      <div class="helper">One entry per line. The wheel updates automatically.</div>
+      <div class="side-actions">
+        <button class="secondary" id="shuffleBtn" type="button">Shuffle</button>
+        <button class="danger" id="removeBtn" type="button" disabled>Remove chosen answer</button>
+      </div>
+      <div class="result" id="result" aria-live="polite">
+        <div>
+          <div class="label">Chosen answer</div>
+          <div class="name" id="winner">—</div>
+        </div>
+        <div class="confetti" id="confetti"></div>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<script>
+(() => {
+  const canvas = document.getElementById('wheel');
+  const ctx = canvas.getContext('2d');
+  const entriesBox = document.getElementById('entries');
+  const spinBtn = document.getElementById('spinBtn');
+  const shuffleBtn = document.getElementById('shuffleBtn');
+  const removeBtn = document.getElementById('removeBtn');
+  const winnerEl = document.getElementById('winner');
+  const result = document.getElementById('result');
+  const status = document.getElementById('status');
+  const pointer = document.getElementById('pointer');
+  const confetti = document.getElementById('confetti');
+  const TAU = Math.PI * 2;
+  const palette = ['#3b82f6','#8b5cf6','#06b6d4','#10b981','#f59e0b','#ef4444','#ec4899','#6366f1','#14b8a6','#f97316'];
+  let rotation = 0;
+  let spinning = false;
+  let lastWinner = null;
+  let raf = null;
+  let lastTickIndex = -1;
+
+  function entries(){
+    return entriesBox.value.split(/\n+/).map(v=>v.trim()).filter(Boolean).slice(0,80);
+  }
+
+  function drawWheel(){
+    const items = entries();
+    const w = canvas.width, h = canvas.height, cx = w/2, cy = h/2, r = w*.46;
+    ctx.clearRect(0,0,w,h);
+    if(!items.length){
+      ctx.beginPath();ctx.arc(cx,cy,r,0,TAU);ctx.fillStyle='#e5e7eb';ctx.fill();
+      ctx.fillStyle='#64748b';ctx.font='700 34px system-ui';ctx.textAlign='center';ctx.fillText('Add some entries',cx,cy+12);return;
+    }
+    const arc = TAU/items.length;
+    ctx.save();ctx.translate(cx,cy);ctx.rotate(rotation);
+    items.forEach((item,i)=>{
+      const a0=-Math.PI/2 + i*arc, a1=a0+arc;
+      ctx.beginPath();ctx.moveTo(0,0);ctx.arc(0,0,r,a0,a1);ctx.closePath();ctx.fillStyle=palette[i%palette.length];ctx.fill();
+      ctx.strokeStyle='rgba(255,255,255,.82)';ctx.lineWidth=3;ctx.stroke();
+      // Draw each entry radially from the outside toward the centre.
+      // This gives every slice its own narrow text lane and prevents labels overlapping.
+      ctx.save();
+      ctx.rotate(a0+arc/2);
+      ctx.fillStyle='#fff';
+      ctx.textAlign='center';
+      ctx.textBaseline='middle';
+      const text=item.length>14?item.slice(0,13)+'…':item;
+      const fontSize=Math.max(17,Math.min(28,430/items.length+12));
+      const spacing=Math.max(fontSize*.88,16);
+      ctx.font=`900 ${fontSize}px system-ui`;
+      ctx.shadowColor='rgba(0,0,0,.28)';ctx.shadowBlur=4;
+      const startX=r*.82;
+      for(let c=0;c<text.length;c++){
+        ctx.save();
+        ctx.translate(startX-c*spacing,0);
+        // Rotate each character so the word reads top-to-bottom along the slice.
+        ctx.rotate(Math.PI/2);
+        ctx.fillText(text[c],0,0);
+        ctx.restore();
+      }
+      ctx.restore();
+    });
+    ctx.beginPath();ctx.arc(0,0,r,0,TAU);ctx.lineWidth=14;ctx.strokeStyle='rgba(255,255,255,.95)';ctx.stroke();
+    ctx.restore();
+  }
+
+  function easeOutQuint(t){return 1-Math.pow(1-t,5)}
+  function normalize(a){return ((a%TAU)+TAU)%TAU}
+
+  function pointerTick(currentRotation, count){
+    if(!count) return;
+    const arc=TAU/count;
+    const index=Math.floor(normalize(-currentRotation)/arc);
+    if(index!==lastTickIndex){
+      lastTickIndex=index;pointer.classList.remove('tick');void pointer.offsetWidth;pointer.classList.add('tick');
+    }
+  }
+
+  function celebrate(){
+    confetti.innerHTML='';
+    for(let i=0;i<28;i++){
+      const piece=document.createElement('i');
+      piece.style.left=(Math.random()*100)+'%';
+      piece.style.background=palette[i%palette.length];
+      piece.style.setProperty('--x',((Math.random()-.5)*130)+'px');
+      piece.style.setProperty('--r',(Math.random()*720-360)+'deg');
+      piece.style.animationDelay=(Math.random()*.25)+'s';
+      confetti.appendChild(piece);
+    }
+    setTimeout(()=>confetti.innerHTML='',1900);
+  }
+
+  function spin(){
+    if(spinning) return;
+    const items=entries();
+    if(items.length<2){status.textContent='Add at least 2 entries to spin.';return;}
+    spinning=true;spinBtn.disabled=true;shuffleBtn.disabled=true;removeBtn.disabled=true;winnerEl.textContent='…';result.classList.remove('win');status.textContent='Spinning…';
+    const arc=TAU/items.length;
+    const winnerIndex=Math.floor(Math.random()*items.length);
+    const targetSegmentCenter=-Math.PI/2+(winnerIndex+.5)*arc;
+    const targetAtPointer=-Math.PI/2;
+    const required=targetAtPointer-targetSegmentCenter;
+    const currentNorm=normalize(rotation);
+    const deltaNorm=normalize(required-currentNorm);
+    const extraTurns=(6+Math.floor(Math.random()*3))*TAU;
+    const start=rotation, end=rotation+extraTurns+deltaNorm;
+    const duration=4300+Math.random()*900;
+    const t0=performance.now();lastTickIndex=-1;
+    const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    function frame(now){
+      const p=Math.min(1,(now-t0)/(reduced?1:duration));
+      const eased=easeOutQuint(p);rotation=start+(end-start)*eased;drawWheel();pointerTick(rotation,items.length);
+      if(p<1){raf=requestAnimationFrame(frame)}else{
+        rotation=normalize(end);drawWheel();
+        // determine item at pointer from final geometry for consistency
+        const local=normalize(-rotation);const idx=Math.floor((local+arc*.0001)/arc)%items.length;
+        lastWinner=items[idx] ?? items[winnerIndex];
+        winnerEl.textContent=lastWinner;result.classList.add('win');celebrate();
+        status.textContent=`Chosen answer: ${lastWinner}`;spinning=false;spinBtn.disabled=false;shuffleBtn.disabled=false;removeBtn.disabled=false;
+      }
+    }
+    raf=requestAnimationFrame(frame);
+  }
+
+  function shuffle(){
+    if(spinning)return;
+    const a=entries();
+    for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}
+    entriesBox.value=a.join('\n');lastWinner=null;winnerEl.textContent='—';removeBtn.disabled=true;status.textContent='Entries shuffled.';drawWheel();
+  }
+
+  function removeWinner(){
+    if(!lastWinner||spinning)return;
+    const a=entries();const idx=a.indexOf(lastWinner);if(idx>=0)a.splice(idx,1);
+    entriesBox.value=a.join('\n');status.textContent=`Removed ${lastWinner} from the wheel.`;lastWinner=null;winnerEl.textContent='—';removeBtn.disabled=true;drawWheel();
+  }
+
+  entriesBox.addEventListener('input',()=>{if(!spinning){lastWinner=null;winnerEl.textContent='—';removeBtn.disabled=true;status.textContent='';drawWheel();}});
+  spinBtn.addEventListener('click',spin);shuffleBtn.addEventListener('click',shuffle);removeBtn.addEventListener('click',removeWinner);
+  drawWheel();
+})();
+</script>
+</body>
+</html>

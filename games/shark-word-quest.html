@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Shark Word Quest</title>
+<style>
+:root{--deep:#063a5c;--ocean:#0d8dc4;--foam:#dff7ff;--sand:#efd28b;--ink:#102a3a;--card:#ffffff;--accent:#ffcc4d;--danger:#e85959}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:linear-gradient(#dff5ff 0 23%,#55c8e8 23% 34%,#0b87bd 34% 100%);color:var(--ink);min-height:100vh}
+.game{max-width:1050px;margin:0 auto;padding:22px}
+.top{display:flex;gap:16px;justify-content:space-between;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+.title{margin:0;font-size:clamp(1.8rem,4vw,3rem);color:#073b59;text-shadow:0 2px 0 #fff8}
+.badge{background:#fff;border:3px solid #0a6f9d;border-radius:999px;padding:8px 14px;font-weight:800}
+.layout{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(290px,.75fr);gap:18px}
+.panel{background:#ffffffdd;border:3px solid #0b6b91;border-radius:22px;padding:18px;box-shadow:0 10px 24px #00344a26}
+.scene{position:relative;overflow:hidden;min-height:400px;border-radius:18px;background:linear-gradient(#37b9e3 0 20%,#118cbd 20% 63%,#08648f 63% 100%);border:4px solid #fff}
+.surface{position:absolute;top:18%;left:0;right:0;height:18px;background:linear-gradient(180deg,#fff9,#fff0);opacity:.85}
+.bubbles span{position:absolute;border:2px solid #dffbff;border-radius:50%;opacity:.7;animation:rise 5s linear infinite}.bubbles span:nth-child(1){width:14px;height:14px;left:16%;bottom:9%;animation-delay:.3s}.bubbles span:nth-child(2){width:9px;height:9px;left:31%;bottom:4%;animation-delay:2s}.bubbles span:nth-child(3){width:18px;height:18px;left:63%;bottom:13%;animation-delay:1.2s}.bubbles span:nth-child(4){width:10px;height:10px;left:82%;bottom:5%;animation-delay:3s}
+@keyframes rise{to{transform:translateY(-350px);opacity:0}}
+.seabed{position:absolute;bottom:-4px;left:-2%;width:104%;height:68px;background:var(--sand);border-radius:50% 50% 0 0}
+.weed{position:absolute;bottom:45px;width:12px;height:70px;background:#167b5f;border-radius:60% 10% 60% 10%;transform-origin:bottom;opacity:.9}.w1{left:9%;transform:rotate(-11deg)}.w2{left:14%;height:55px;transform:rotate(15deg)}.w3{right:11%;height:62px;transform:rotate(10deg)}
+.fish{position:absolute;right:10%;top:47%;width:78px;height:42px;transition:transform .7s ease,opacity .5s ease;z-index:3}
+.fish-body{position:absolute;left:10px;top:6px;width:55px;height:30px;border-radius:50% 45% 45% 50%;background:#ffb329;border:3px solid #9a5a00}.fish-tail{position:absolute;left:-5px;top:8px;width:0;height:0;border-top:13px solid transparent;border-bottom:13px solid transparent;border-right:22px solid #f4832d}.fish-eye{position:absolute;right:14px;top:11px;width:6px;height:6px;background:#102a3a;border-radius:50%}
+.shark{position:absolute;left:7%;top:35%;width:330px;height:160px;z-index:4;transform:translateX(-38px);transition:transform .5s ease}
+.part{position:absolute;opacity:0;transform:scale(.9);transition:opacity .45s ease,transform .45s ease}.part.show{opacity:1;transform:scale(1)}
+.shark-body{left:45px;top:42px;width:210px;height:82px;background:#7d95a3;border-radius:55% 62% 52% 48%;border:4px solid #4f6878}.shark-snout{left:225px;top:55px;width:72px;height:56px;background:#879daa;border-radius:20% 70% 60% 20%;border:4px solid #4f6878;border-left:0}.shark-tail{left:0;top:48px;width:0;height:0;border-top:38px solid transparent;border-bottom:38px solid transparent;border-right:68px solid #6f8999}.shark-fin{left:130px;top:6px;width:0;height:0;border-left:24px solid transparent;border-right:18px solid transparent;border-bottom:62px solid #6f8999;transform:rotate(-8deg)}.shark-eye{left:244px;top:67px;width:11px;height:11px;border-radius:50%;background:#0b1720}.shark-mouth{left:255px;top:84px;width:30px;height:9px;border-bottom:4px solid #3b1111;border-radius:50%}.shark-teeth{left:258px;top:91px;width:26px;height:14px;background:repeating-linear-gradient(135deg,#fff 0 5px,transparent 5px 10px);clip-path:polygon(0 0,100% 0,82% 100%,65% 10%,48% 100%,30% 10%,12% 100%)}
+.shark.attack{animation:attack .9s ease-in forwards}.fish.eaten{animation:eaten .7s .35s ease-in forwards}
+@keyframes attack{70%{transform:translateX(430px) scale(1.03)}100%{transform:translateX(455px) scale(1.08)}}
+@keyframes eaten{to{transform:translateX(-35px) scale(.1) rotate(25deg);opacity:0}}
+.statusbar{position:absolute;left:12px;right:12px;bottom:12px;background:#003a55d9;color:white;border-radius:12px;padding:8px 10px;font-weight:800;text-align:center;z-index:8}
+.word-area{margin-top:16px;padding:22px 14px 14px;border-radius:16px;background:#ffffffc9;border:2px solid #b9e2ef}.word{display:flex;justify-content:center;align-items:flex-end;gap:clamp(8px,2vw,18px);flex-wrap:wrap;min-height:74px}.letter-slot{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;min-width:clamp(28px,5vw,48px)}.slot-letter{height:42px;font-size:clamp(1.8rem,5vw,3rem);line-height:1;font-weight:900}.slot-line{width:100%;border-bottom:5px solid #123b51;border-radius:4px}.space-slot{width:20px}
+.hint-wrap{display:flex;flex-direction:column;align-items:center;gap:8px;margin-bottom:14px}.hint{text-align:center;color:#456;min-height:24px}.hint-toggle{min-height:40px;padding:8px 14px;border:0;border-radius:10px;background:#e9eef1;color:#17394a;border:2px solid #b9ccd4;font-weight:800;cursor:pointer}
+.keyboard{display:grid;grid-template-columns:repeat(7,1fr);gap:7px}.keyboard button{min-height:42px;border:0;border-radius:10px;background:#e9f7fb;color:#073b59;font-weight:900;font-size:1rem;cursor:pointer;border:2px solid #9ed6e7}.keyboard button:hover:not(:disabled){background:#d5f0f8}.keyboard button:disabled{opacity:.35;cursor:not-allowed}.keyboard button.wrong{background:#ffd8d8;border-color:#ec9d9d}.keyboard button.correct{background:#d6f4df;border-color:#8bd2a1}
+.controls{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}.controls button{flex:1;min-height:44px;border:0;border-radius:12px;background:#0b78a7;color:#fff;font-weight:900;cursor:pointer}.controls button.secondary{background:#e9eef1;color:#17394a;border:2px solid #b9ccd4}
+.progress{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-top:12px}.pip{height:10px;border-radius:99px;background:#dcecf2}.pip.on{background:var(--danger)}
+.instructions{margin:0 0 10px;padding-left:20px;line-height:1.5}.message{font-size:1.08rem;font-weight:800;text-align:center;min-height:28px;margin-top:12px}.win{color:#16713a}.lose{color:#a11f2f}
+@media(max-width:800px){.layout{grid-template-columns:1fr}.scene{min-height:330px}.shark{transform:scale(.8) translateX(-55px);transform-origin:left center}.shark.attack{animation:attackMobile .9s ease-in forwards}@keyframes attackMobile{to{transform:scale(.8) translateX(360px)}}.fish{right:5%}}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}}
+</style>
+</head>
+<body>
+<main class="game">
+  <div class="top"><h1 class="title">🦈 Shark Word Quest</h1><div class="badge">Wrong guesses: <span id="wrongCount">0</span> / 7</div></div>
+  <div class="layout">
+    <section class="panel">
+      <div class="scene" aria-label="Ocean scene showing the shark getting closer after wrong guesses">
+        <div class="surface"></div>
+        <div class="bubbles"><span></span><span></span><span></span><span></span></div>
+        <div class="seabed"></div><div class="weed w1"></div><div class="weed w2"></div><div class="weed w3"></div>
+        <div class="shark" id="shark">
+          <div class="part shark-tail" data-stage="1"></div>
+          <div class="part shark-body" data-stage="2"></div>
+          <div class="part shark-fin" data-stage="3"></div>
+          <div class="part shark-snout" data-stage="4"></div>
+          <div class="part shark-eye" data-stage="5"></div>
+          <div class="part shark-mouth" data-stage="6"></div>
+          <div class="part shark-teeth" data-stage="7"></div>
+        </div>
+        <div class="fish" id="fish" aria-label="fish"><div class="fish-tail"></div><div class="fish-body"><div class="fish-eye"></div></div></div>
+        <div class="statusbar" id="sceneStatus">The shark is hiding. Keep the fish safe!</div>
+      </div>
+      <div class="word-area">
+        <div class="word" id="word" aria-label="Hidden word"></div>
+      </div>
+      <div class="progress" id="progress" aria-label="Seven wrong guess stages"></div>
+    </section>
+
+    <section class="panel">
+      <ul class="instructions">
+        <li>Guess the hidden word one letter at a time.</li>
+        <li>Each wrong guess reveals more of the shark.</li>
+        <li>After 7 wrong guesses, the shark eats the fish.</li>
+      </ul>
+      <div class="hint-wrap">
+        <button class="hint-toggle" id="hintToggle" type="button" aria-expanded="false">Show Hint</button>
+        <div class="hint" id="hint" hidden></div>
+      </div>
+      <div class="keyboard" id="keyboard"></div>
+      <div class="message" id="message" aria-live="polite"></div>
+      <div class="controls"><button id="newWord">New Word</button></div>
+    </section>
+  </div>
+</main>
+<script>
+(()=>{
+const WORDS=[
+ {word:'HERITAGE',hint:'Things passed down from the past that are important to a culture or family.'},
+ {word:'CULTURE',hint:'The ideas, customs, arts and ways of life of a group of people.'},
+ {word:'ANCESTOR',hint:'A person in your family who lived many years before you.'},
+ {word:'ARTIFACT',hint:'An object from the past that can teach us about history.'},
+ {word:'PIONEER',hint:'A person who is among the first to explore or develop something new.'},
+ {word:'VIEWPOINT',hint:'The way a person thinks about or sees an issue.'},
+ {word:'TRADITION',hint:'A custom or belief passed from one generation to another.'},
+ {word:'INNOVATION',hint:'A new idea, method or invention that improves something.'},
+ {word:'IRRIGATION',hint:'A system used to bring water to fields or crops.'},
+ {word:'CELEBRATE',hint:'To do something special for an important event or achievement.'}
+];
+const wordEl=document.getElementById('word'), hintEl=document.getElementById('hint'), hintToggle=document.getElementById('hintToggle'), keyboard=document.getElementById('keyboard'), message=document.getElementById('message'), wrongCount=document.getElementById('wrongCount'), shark=document.getElementById('shark'), fish=document.getElementById('fish'), status=document.getElementById('sceneStatus'), progress=document.getElementById('progress');
+let current, guessed, wrong, ended;
+for(let i=0;i<7;i++){const p=document.createElement('div');p.className='pip';progress.appendChild(p)}
+function choose(){current=WORDS[Math.floor(Math.random()*WORDS.length)];reset()}
+function reset(){guessed=new Set();wrong=0;ended=false;message.textContent='';message.className='message';wrongCount.textContent='0';shark.classList.remove('attack');fish.classList.remove('eaten');document.querySelectorAll('.part').forEach(x=>x.classList.remove('show'));[...progress.children].forEach(x=>x.classList.remove('on'));status.textContent='The shark is hiding. Keep the fish safe!';hintEl.textContent='Hint: '+current.hint;hintEl.hidden=true;hintToggle.textContent='Show Hint';hintToggle.setAttribute('aria-expanded','false');buildKeyboard();renderWord()}
+function buildKeyboard(){keyboard.innerHTML='';'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').forEach(letter=>{const b=document.createElement('button');b.type='button';b.textContent=letter;b.setAttribute('aria-label','Guess '+letter);b.addEventListener('click',()=>guess(letter,b));keyboard.appendChild(b)})}
+function renderWord(){wordEl.innerHTML='';current.word.split('').forEach(ch=>{if(ch===' '){const space=document.createElement('span');space.className='space-slot';wordEl.appendChild(space);return;}const slot=document.createElement('span');slot.className='letter-slot';const letter=document.createElement('span');letter.className='slot-letter';letter.textContent=guessed.has(ch)?ch:'';const line=document.createElement('span');line.className='slot-line';slot.append(letter,line);wordEl.appendChild(slot)});const won=current.word.split('').every(ch=>ch===' '||guessed.has(ch));if(won&&!ended){ended=true;message.textContent='You saved the fish! 🎉';message.classList.add('win');status.textContent='Safe! The shark did not get the fish.';disableAll()}}
+function guess(letter,button){if(ended||guessed.has(letter))return;guessed.add(letter);button.disabled=true;if(current.word.includes(letter)){button.classList.add('correct');renderWord()}else{button.classList.add('wrong');wrong++;wrongCount.textContent=wrong;document.querySelector('[data-stage="'+wrong+'"]').classList.add('show');progress.children[wrong-1].classList.add('on');if(wrong<7){status.textContent='Wrong guess! The shark is getting closer… ('+wrong+'/7)'}else{lose()}}}
+function lose(){ended=true;document.querySelectorAll('.part').forEach(x=>x.classList.add('show'));status.textContent='Oh no! The shark got the fish!';message.textContent='The word was '+current.word+'. Try another word!';message.classList.add('lose');shark.classList.add('attack');fish.classList.add('eaten');disableAll()}
+function disableAll(){keyboard.querySelectorAll('button').forEach(b=>b.disabled=true)}
+document.addEventListener('keydown',e=>{
+  if(ended||e.ctrlKey||e.metaKey||e.altKey)return;
+  const key=e.key.toUpperCase();
+  if(!/^[A-Z]$/.test(key))return;
+  const button=[...keyboard.querySelectorAll('button')].find(b=>b.textContent===key);
+  if(button&&!button.disabled){
+    e.preventDefault();
+    button.focus();
+    button.click();
+  }
+});
+hintToggle.addEventListener('click',()=>{const showing=!hintEl.hidden;hintEl.hidden=showing;hintToggle.textContent=showing?'Show Hint':'Hide Hint';hintToggle.setAttribute('aria-expanded',showing?'false':'true')});
+document.getElementById('newWord').addEventListener('click',choose);
+choose();
+})();
+</script>
+</body>
+</html>
