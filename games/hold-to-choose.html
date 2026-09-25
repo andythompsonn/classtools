@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Hold to Choose</title>
+<link rel="stylesheet" href="game-nav.css" />
+<style>
+:root{
+  --ink:#20324a;
+  --muted:#6d7a90;
+  --panel:#ffffff;
+  --line:#dbe3ef;
+  --correct:#2ea66f;
+  --wrong:#d95757;
+  --q1:#e4ad3f;
+  --q2:#9ed4da;
+  --q3:#c9cef7;
+  --q4:#b7c4e2;
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#eef3f8;color:var(--ink)}
+body{min-height:100vh;overflow:hidden}
+button{font:inherit}
+
+.game{
+  min-height:100vh;
+  display:grid;
+  grid-template-rows:auto 1fr auto;
+  background:#eef3f8;
+  position:relative;
+}
+
+.topbar{
+  min-height:72px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:16px;
+  padding:14px 22px;
+  background:rgba(255,255,255,.92);
+  border-bottom:1px solid var(--line);
+  z-index:10;
+}
+.brand{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  font-weight:900;
+  letter-spacing:.2px;
+}
+.brand-badge{
+  width:46px;height:46px;border-radius:15px;
+  display:grid;place-items:center;
+  background:#20324a;color:white;
+  box-shadow:0 8px 18px rgba(31,50,74,.16);
+}
+.brand-badge span{font-size:24px}
+.progress-wrap{
+  flex:1;max-width:520px;display:flex;align-items:center;gap:12px;
+}
+.progress-track{
+  flex:1;height:10px;border-radius:99px;background:#e8edf4;overflow:hidden;
+}
+.progress-bar{
+  width:0%;height:100%;background:#20324a;border-radius:99px;transition:width .35s ease;
+}
+.counter,.score{
+  white-space:nowrap;font-weight:800;font-size:14px;color:#506079;
+}
+.score{
+  background:#f3f6fa;border:1px solid var(--line);border-radius:999px;padding:9px 13px;
+}
+
+.stage{
+  position:relative;
+  min-height:0;
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  grid-template-rows:1fr 1fr;
+}
+
+.choice{
+  position:relative;
+  border:0;
+  padding:34px;
+  color:#24344e;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  min-width:0;
+  overflow:hidden;
+  user-select:none;
+  touch-action:none;
+  outline:none;
+  transition:filter .2s ease, transform .2s ease, opacity .25s ease;
+}
+.choice:nth-child(1){background:var(--q1)}
+.choice:nth-child(2){background:var(--q2)}
+.choice:nth-child(3){background:var(--q3)}
+.choice:nth-child(4){background:var(--q4)}
+.choice::after{
+  content:"";
+  position:absolute;inset:0;
+  background:radial-gradient(circle at 50% 50%,rgba(255,255,255,.28),transparent 48%);
+  opacity:0;transition:opacity .2s ease;
+}
+.choice:hover::after{opacity:.35}
+.choice:focus-visible{box-shadow:inset 0 0 0 6px rgba(32,50,74,.35)}
+.choice.holding{filter:saturate(1.08) brightness(1.02)}
+.choice.selected{animation:pop .38s ease}
+.choice.correct{box-shadow:inset 0 0 0 10px rgba(46,166,111,.85)}
+.choice.wrong{box-shadow:inset 0 0 0 10px rgba(217,87,87,.9)}
+.choice.dimmed{opacity:.48}
+
+.choice-inner{
+  position:relative;
+  z-index:2;
+  max-width:680px;
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+  align-items:center;
+}
+.choice-label{
+  font-size:clamp(15px,1.2vw,18px);
+  font-weight:900;
+  opacity:.56;
+  text-transform:uppercase;
+  letter-spacing:1.5px;
+}
+.choice-text{
+  font-weight:900;
+  line-height:1.14;
+  font-size:clamp(24px,2.8vw,46px);
+  text-wrap:balance;
+}
+.hold-note{
+  font-size:clamp(12px,1vw,15px);
+  font-weight:800;
+  opacity:.5;
+  transition:opacity .2s ease;
+}
+.choice.holding .hold-note{opacity:.85}
+
+.fill{
+  position:absolute;
+  left:0;bottom:0;
+  width:0%;
+  height:100%;
+  background:linear-gradient(to top,rgba(255,255,255,.32),rgba(255,255,255,.08));
+  pointer-events:none;
+  z-index:1;
+}
+
+.ring{
+  position:absolute;
+  width:72px;height:72px;border-radius:50%;
+  border:7px solid rgba(255,255,255,.3);
+  left:50%;top:50%;
+  transform:translate(-50%,-50%) scale(.75);
+  opacity:0;
+  z-index:3;
+  pointer-events:none;
+}
+.ring svg{width:100%;height:100%;transform:rotate(-90deg)}
+.ring circle{
+  fill:none;stroke:#fff;stroke-width:8;
+  stroke-linecap:round;
+  stroke-dasharray:176;
+  stroke-dashoffset:176;
+}
+.choice.holding .ring{opacity:1;animation:ringIn .15s ease forwards}
+
+.prompt{
+  position:absolute;
+  left:50%;top:50%;
+  transform:translate(-50%,-50%);
+  z-index:8;
+  pointer-events:none;
+  width:min(720px,70vw);
+  display:flex;justify-content:center;
+}
+.prompt-card{
+  background:#fff;
+  border:3px solid #20324a;
+  border-radius:24px;
+  box-shadow:0 14px 32px rgba(31,50,74,.18);
+  padding:16px 28px 18px;
+  text-align:center;
+  max-width:100%;
+}
+.prompt-kicker{
+  font-size:12px;font-weight:900;letter-spacing:1.6px;text-transform:uppercase;color:#7a8699;margin-bottom:5px;
+}
+.prompt-text{
+  font-size:clamp(28px,4vw,64px);
+  font-weight:1000;
+  line-height:1;
+  letter-spacing:-1.2px;
+  text-wrap:balance;
+}
+
+.bottombar{
+  min-height:68px;
+  padding:12px 18px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  background:#fff;
+  border-top:1px solid var(--line);
+}
+.tip{
+  color:#69778d;font-size:14px;font-weight:700;
+}
+.status{
+  min-height:42px;
+  display:flex;align-items:center;justify-content:center;
+  text-align:center;
+  font-weight:900;
+  font-size:17px;
+  color:#31445f;
+}
+.next-btn{
+  border:0;background:#20324a;color:#fff;
+  border-radius:14px;padding:12px 18px;font-weight:900;cursor:pointer;
+  opacity:0;pointer-events:none;transform:translateY(6px);
+  transition:.22s ease;
+}
+.next-btn.show{opacity:1;pointer-events:auto;transform:none}
+.next-btn:hover{filter:brightness(1.1)}
+
+.feedback-badge{
+  position:absolute;
+  right:20px;top:18px;
+  z-index:6;
+  min-width:42px;height:42px;border-radius:50%;
+  display:grid;place-items:center;
+  font-size:24px;font-weight:1000;color:#fff;
+  opacity:0;transform:scale(.5) rotate(-10deg);
+  transition:.25s ease;
+}
+.choice.correct .feedback-badge{background:var(--correct);opacity:1;transform:scale(1) rotate(0)}
+.choice.wrong .feedback-badge{background:var(--wrong);opacity:1;transform:scale(1) rotate(0)}
+
+.overlay{
+  position:absolute;inset:0;z-index:20;
+  display:none;align-items:center;justify-content:center;
+  background:rgba(239,244,249,.9);
+  backdrop-filter:blur(8px);
+  padding:24px;
+}
+.overlay.show{display:flex}
+.end-card{
+  width:min(560px,92vw);
+  background:#fff;border:1px solid var(--line);border-radius:28px;
+  box-shadow:0 22px 60px rgba(31,50,74,.16);
+  padding:34px;text-align:center;
+}
+.end-card h2{margin:0 0 10px;font-size:42px}
+.end-card p{margin:0 0 22px;color:#68768b;font-weight:700}
+.end-score{font-size:58px;font-weight:1000;line-height:1;margin:20px 0}
+.restart{
+  border:0;background:#20324a;color:#fff;padding:14px 22px;border-radius:14px;font-weight:900;cursor:pointer
+}
+
+@keyframes pop{
+  0%{transform:scale(1)}
+  45%{transform:scale(.975)}
+  100%{transform:scale(1)}
+}
+@keyframes ringIn{
+  from{transform:translate(-50%,-50%) scale(.7)}
+  to{transform:translate(-50%,-50%) scale(1)}
+}
+@media (prefers-reduced-motion:reduce){
+  *{animation:none!important;transition:none!important}
+}
+@media (max-width:800px){
+  body{overflow:auto}
+  .game{min-height:100vh}
+  .topbar{padding:10px 12px;min-height:64px}
+  .brand strong{display:none}
+  .progress-wrap{max-width:none}
+  .stage{
+    min-height:calc(100vh - 132px);
+    grid-template-columns:1fr;
+    grid-template-rows:repeat(4,minmax(180px,1fr));
+  }
+  .prompt{
+    position:sticky;top:0;grid-column:1;
+    transform:none;left:auto;
+    width:auto;margin:0 10px;
+    justify-content:center;
+    pointer-events:none;
+    z-index:12;
+  }
+  .prompt-card{
+    margin-top:8px;
+    border-width:2px;
+    padding:10px 18px 12px;
+    border-radius:16px;
+  }
+  .prompt-kicker{font-size:10px}
+  .prompt-text{font-size:clamp(24px,8vw,38px)}
+  .choice{padding:58px 22px 24px}
+  .choice-text{font-size:clamp(22px,6vw,34px)}
+  .bottombar{position:sticky;bottom:0;z-index:15;padding:9px 10px}
+  .tip{display:none}
+}
+</style>
+</head>
+<body>
+<main class="game" id="game">
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-badge"><span>4</span></div>
+      <strong>Hold to Choose</strong>
+    </div>
+
+    <div class="progress-wrap" aria-label="Game progress">
+      <span class="counter" id="counter">1 / 6</span>
+      <div class="progress-track"><div class="progress-bar" id="progressBar"></div></div>
+    </div>
+
+    <div class="score">Score: <span id="score">0</span></div>
+  </header>
+
+  <section class="stage" id="stage" aria-live="polite">
+    <button class="choice" data-index="0" type="button">
+      <div class="fill"></div>
+      <div class="ring" aria-hidden="true">
+        <svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="28"></circle></svg>
+      </div>
+      <div class="feedback-badge"></div>
+      <div class="choice-inner">
+        <div class="choice-label">A</div>
+        <div class="choice-text"></div>
+        <div class="hold-note">Press and hold to choose</div>
+      </div>
+    </button>
+
+    <button class="choice" data-index="1" type="button">
+      <div class="fill"></div>
+      <div class="ring" aria-hidden="true">
+        <svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="28"></circle></svg>
+      </div>
+      <div class="feedback-badge"></div>
+      <div class="choice-inner">
+        <div class="choice-label">B</div>
+        <div class="choice-text"></div>
+        <div class="hold-note">Press and hold to choose</div>
+      </div>
+    </button>
+
+    <button class="choice" data-index="2" type="button">
+      <div class="fill"></div>
+      <div class="ring" aria-hidden="true">
+        <svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="28"></circle></svg>
+      </div>
+      <div class="feedback-badge"></div>
+      <div class="choice-inner">
+        <div class="choice-label">C</div>
+        <div class="choice-text"></div>
+        <div class="hold-note">Press and hold to choose</div>
+      </div>
+    </button>
+
+    <button class="choice" data-index="3" type="button">
+      <div class="fill"></div>
+      <div class="ring" aria-hidden="true">
+        <svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="28"></circle></svg>
+      </div>
+      <div class="feedback-badge"></div>
+      <div class="choice-inner">
+        <div class="choice-label">D</div>
+        <div class="choice-text"></div>
+        <div class="hold-note">Press and hold to choose</div>
+      </div>
+    </button>
+
+    <div class="prompt">
+      <div class="prompt-card">
+        <div class="prompt-kicker">Choose the correct definition</div>
+        <div class="prompt-text" id="promptText">Heritage</div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="bottombar">
+    <div class="tip">Hold a box until it fills. Release early to cancel.</div>
+    <div class="status" id="status">Choose the best answer.</div>
+    <button class="next-btn" id="nextBtn" type="button">Next →</button>
+  </footer>
+
+  <div class="overlay" id="endOverlay">
+    <div class="end-card">
+      <h2>Great job!</h2>
+      <p>You finished the round.</p>
+      <div class="end-score"><span id="finalScore">0</span>/<span id="finalTotal">0</span></div>
+      <button class="restart" id="restartBtn" type="button">Play Again</button>
+    </div>
+  </div>
+</main>
+
+<script>
+/* =========================================================
+   EDIT YOUR QUESTIONS HERE
+   correct: 0=A, 1=B, 2=C, 3=D
+   ========================================================= */
+const QUESTIONS = [
+  {
+    prompt: "Heritage",
+    options: [
+      "The traditions, culture, places and objects passed down from the past.",
+      "A new invention designed to solve a modern problem.",
+      "A map showing where different countries are located.",
+      "A rule that everyone in a community must follow."
+    ],
+    correct: 0
+  },
+  {
+    prompt: "Ancestor",
+    options: [
+      "A person who moves to another country.",
+      "A person in your family who lived many years before you.",
+      "A famous person from history.",
+      "Someone who studies old buildings and objects."
+    ],
+    correct: 1
+  },
+  {
+    prompt: "Artifact",
+    options: [
+      "A story that has been changed many times.",
+      "A place where people celebrate together.",
+      "An object from the past that can teach us about history.",
+      "A person who keeps family traditions alive."
+    ],
+    correct: 2
+  },
+  {
+    prompt: "Tradition",
+    options: [
+      "A new idea used for the first time.",
+      "A skill that is only used at school.",
+      "A law created by a government.",
+      "A custom or way of doing something passed down over time."
+    ],
+    correct: 3
+  },
+  {
+    prompt: "Viewpoint",
+    options: [
+      "The way a person thinks about or sees something.",
+      "A list of facts in date order.",
+      "A picture taken from very far away.",
+      "A type of historical evidence."
+    ],
+    correct: 0
+  },
+  {
+    prompt: "Pioneer",
+    options: [
+      "Someone who copies an idea from another person.",
+      "Someone who is among the first to explore, develop or create something.",
+      "Someone who studies only ancient history.",
+      "Someone who protects a museum collection."
+    ],
+    correct: 1
+  }
+];
+
+const HOLD_MS = 900;
+
+const choices = [...document.querySelectorAll(".choice")];
+const promptText = document.getElementById("promptText");
+const statusEl = document.getElementById("status");
+const nextBtn = document.getElementById("nextBtn");
+const scoreEl = document.getElementById("score");
+const counterEl = document.getElementById("counter");
+const progressBar = document.getElementById("progressBar");
+const endOverlay = document.getElementById("endOverlay");
+const finalScore = document.getElementById("finalScore");
+const finalTotal = document.getElementById("finalTotal");
+const restartBtn = document.getElementById("restartBtn");
+
+let qIndex = 0;
+let score = 0;
+let answered = false;
+let holdRAF = null;
+let holdStart = 0;
+let activeChoice = null;
+let activePointerId = null;
+
+function renderQuestion() {
+  answered = false;
+  cancelHold();
+  const q = QUESTIONS[qIndex];
+
+  promptText.textContent = q.prompt;
+  choices.forEach((choice, i) => {
+    choice.disabled = false;
+    choice.classList.remove("holding","selected","correct","wrong","dimmed");
+    choice.querySelector(".choice-text").textContent = q.options[i];
+    choice.querySelector(".fill").style.width = "0%";
+    choice.querySelector("circle").style.strokeDashoffset = "176";
+    choice.querySelector(".feedback-badge").textContent = "";
+  });
+
+  statusEl.textContent = "Choose the best answer.";
+  nextBtn.classList.remove("show");
+  counterEl.textContent = `${qIndex + 1} / ${QUESTIONS.length}`;
+  progressBar.style.width = `${(qIndex / QUESTIONS.length) * 100}%`;
+  scoreEl.textContent = score;
+}
+
+function beginHold(choice, pointerId) {
+  if (answered || choice.disabled) return;
+
+  cancelHold();
+  activeChoice = choice;
+  activePointerId = pointerId;
+  holdStart = performance.now();
+  choice.classList.add("holding");
+
+  try { choice.setPointerCapture(pointerId); } catch(e) {}
+
+  const fill = choice.querySelector(".fill");
+  const circle = choice.querySelector("circle");
+
+  function tick(now) {
+    if (!activeChoice || answered) return;
+    const p = Math.min(1, (now - holdStart) / HOLD_MS);
+    fill.style.width = `${p * 100}%`;
+    circle.style.strokeDashoffset = String(176 * (1 - p));
+
+    if (p >= 1) {
+      chooseAnswer(Number(choice.dataset.index));
+      return;
+    }
+    holdRAF = requestAnimationFrame(tick);
+  }
+
+  holdRAF = requestAnimationFrame(tick);
+}
+
+function cancelHold() {
+  if (holdRAF) cancelAnimationFrame(holdRAF);
+  holdRAF = null;
+
+  if (activeChoice && !answered) {
+    activeChoice.classList.remove("holding");
+    activeChoice.querySelector(".fill").style.width = "0%";
+    activeChoice.querySelector("circle").style.strokeDashoffset = "176";
+  }
+
+  activeChoice = null;
+  activePointerId = null;
+}
+
+function chooseAnswer(index) {
+  if (answered) return;
+  answered = true;
+
+  if (holdRAF) cancelAnimationFrame(holdRAF);
+  holdRAF = null;
+
+  const q = QUESTIONS[qIndex];
+  const chosen = choices[index];
+  const correctChoice = choices[q.correct];
+
+  choices.forEach(c => {
+    c.disabled = true;
+    c.classList.remove("holding");
+  });
+
+  chosen.classList.add("selected");
+
+  if (index === q.correct) {
+    chosen.classList.add("correct");
+    chosen.querySelector(".feedback-badge").textContent = "✓";
+    statusEl.textContent = "Correct!";
+    score++;
+    scoreEl.textContent = score;
+  } else {
+    chosen.classList.add("wrong");
+    chosen.querySelector(".feedback-badge").textContent = "×";
+    correctChoice.classList.add("correct");
+    correctChoice.querySelector(".feedback-badge").textContent = "✓";
+    statusEl.textContent = "Not quite — the correct answer is highlighted.";
+  }
+
+  choices.forEach((c, i) => {
+    if (i !== index && i !== q.correct) c.classList.add("dimmed");
+  });
+
+  progressBar.style.width = `${((qIndex + 1) / QUESTIONS.length) * 100}%`;
+  nextBtn.textContent = qIndex === QUESTIONS.length - 1 ? "Finish" : "Next →";
+  nextBtn.classList.add("show");
+  activeChoice = null;
+}
+
+choices.forEach(choice => {
+  choice.addEventListener("pointerdown", e => {
+    if (e.button !== undefined && e.button !== 0) return;
+    e.preventDefault();
+    beginHold(choice, e.pointerId);
+  });
+
+  choice.addEventListener("pointerup", e => {
+    if (answered) return;
+    if (activePointerId === e.pointerId) cancelHold();
+  });
+
+  choice.addEventListener("pointercancel", e => {
+    if (activePointerId === e.pointerId) cancelHold();
+  });
+
+  choice.addEventListener("pointerleave", e => {
+    if (answered) return;
+    if (activePointerId === e.pointerId && e.pointerType === "mouse") cancelHold();
+  });
+
+  // Keyboard accessibility: hold Space or Enter.
+  choice.addEventListener("keydown", e => {
+    if ((e.key === " " || e.key === "Enter") && !e.repeat && !answered) {
+      e.preventDefault();
+      beginHold(choice, -1);
+    }
+  });
+
+  choice.addEventListener("keyup", e => {
+    if ((e.key === " " || e.key === "Enter") && !answered) {
+      e.preventDefault();
+      cancelHold();
+    }
+  });
+});
+
+nextBtn.addEventListener("click", () => {
+  if (!answered) return;
+  if (qIndex < QUESTIONS.length - 1) {
+    qIndex++;
+    renderQuestion();
+  } else {
+    finalScore.textContent = score;
+    finalTotal.textContent = QUESTIONS.length;
+    endOverlay.classList.add("show");
+  }
+});
+
+restartBtn.addEventListener("click", () => {
+  qIndex = 0;
+  score = 0;
+  endOverlay.classList.remove("show");
+  renderQuestion();
+});
+
+window.addEventListener("blur", cancelHold);
+
+renderQuestion();
+</script>
+<script src="game-nav.js"></script>
+</body>
+</html>
