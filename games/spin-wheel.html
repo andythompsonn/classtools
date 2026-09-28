@@ -53,15 +53,11 @@ textarea:focus{border-color:#60a5fa;box-shadow:0 0 0 4px rgba(96,165,250,.16)}
 .status{margin-top:12px;text-align:center;color:var(--muted);font-size:.92rem;min-height:1.3em}
 @media(max-width:840px){.layout{grid-template-columns:1fr}.side{order:2}.wheel-card{padding:18px}.app{padding:18px 12px 32px}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+@media (min-width:841px){body{height:100vh;overflow:hidden}.app{height:calc(100vh - 64px);padding:12px 20px;overflow:hidden}.wheel-wrap{max-height:calc(100vh - 190px)}}
 </style>
 </head>
-<body>
+<body data-game-title="Spin the Wheel" data-game-subtitle="Choose a random name or answer" data-game-icon="🎡">
 <div class="app">
-  <div class="header">
-    <h1>Spin the Wheel</h1>
-    <p>Add names or choices, then spin for a random result.</p>
-  </div>
-
   <div class="layout">
     <section class="card wheel-card">
       <div class="wheel-wrap">

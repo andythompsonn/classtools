@@ -114,7 +114,6 @@
   const hotseatPage = document.getElementById("hotseatPage");
   const tasksPage = document.getElementById("tasksPage");
   const openTasksPageBtn = document.getElementById("openTasksPageBtn");
-  const openGamesPageBtn = document.getElementById("openGamesPageBtn");
   const openToolsPageBtn = document.getElementById("openToolsPageBtn");
   const openWordlePageBtn = document.getElementById("openWordlePageBtn");
   const openSentenceGuessPageBtn = document.getElementById("openSentenceGuessPageBtn");
@@ -132,8 +131,6 @@
   const toolsBackToMainBtn = document.getElementById("toolsBackToMainBtn");
   const toolsTimerMount = document.getElementById("toolsTimerMount");
   if (toolsTimerMount) toolsTimerMount.append(floatingTimerLauncher, floatingTimerPanel);
-  const wordleBackToGamesBtn = document.getElementById("wordleBackToGamesBtn");
-  const wordleBackToMainBtn = document.getElementById("wordleBackToMainBtn");
   const sentenceGuessBackToGamesBtn = document.getElementById("sentenceGuessBackToGamesBtn");
   const sentenceGuessBackToMainBtn = document.getElementById("sentenceGuessBackToMainBtn");
   const spinWheelPage = document.getElementById("spinWheelPage");
@@ -489,6 +486,13 @@
     renderWordGroups();
     wordEntryList.innerHTML = "";
     const words = activeWordGroup().words || [];
+    document.getElementById("wordEntryCount").textContent = words.length;
+    if (!words.length) {
+      const empty = document.createElement("p");
+      empty.className = "word-library-empty";
+      empty.textContent = "Your list is ready for its first word. Add one above, or import several at once.";
+      wordEntryList.append(empty);
+    }
     words.forEach((entry, index) => {
       const word = normalizeWordEntry(entry);
       const row = document.createElement("div"); row.className = "word-entry-row";
@@ -508,9 +512,24 @@
       actions.append(move, copy);
       const remove = document.createElement("button"); remove.className = "danger-btn small"; remove.type = "button"; remove.textContent = "Remove";
       remove.addEventListener("click", () => { activeWordGroup().words.splice(index, 1); saveWordGroups(); renderWordEntries(); });
-      actions.append(remove); row.append(input, definition, sentence, destination, actions); wordEntryList.append(row);
+      actions.append(remove);
+      [["Word or phrase", input], ["Definition", definition], ["Example sentence", sentence], ["Move or copy to", destination]].forEach(([title, field]) => {
+        const label = document.createElement("label");
+        label.textContent = title;
+        label.append(field);
+        row.append(label);
+      });
+      row.append(actions); wordEntryList.append(row);
+    });
+    filterWordLibrary();
+  }
+  function filterWordLibrary(){
+    const query = document.getElementById("wordLibrarySearch").value.trim().toLocaleLowerCase();
+    wordEntryList.querySelectorAll(".word-entry-row").forEach(row => {
+      row.hidden = !Array.from(row.querySelectorAll("input")).some(input => input.value.toLocaleLowerCase().includes(query));
     });
   }
+  document.getElementById("wordLibrarySearch").addEventListener("input", filterWordLibrary);
   function addWordsToActiveGroup(words){
     const group = activeWordGroup();
     const existing = new Set((group.words || []).map(entry => normalizeWordEntry(entry).word.toLocaleLowerCase()));
@@ -1570,6 +1589,9 @@
   }
 
   function applyRoute(){
+    const isWordle = window.location.hash === "#wordle";
+    siteControls.hidden = !activeUsername || isWordle;
+    if (isWordle) profileMenu.hidden = true;
     document.body.classList.remove("word-manager-open");
     switch (window.location.hash.replace("#", "")){
       case "games": return showGamesPage();
@@ -8675,7 +8697,6 @@
   });
 
   openTasksPageBtn.addEventListener("click", () => navigateTo("tasks"));
-  openGamesPageBtn.addEventListener("click", () => { window.location.href = "games/index.html"; });
   openToolsPageBtn.addEventListener("click", () => { window.location.href = "tools/index.html"; });
   openWordlePageBtn.addEventListener("click", () => { window.location.href = "games/wordle.html"; });
   openSentenceGuessPageBtn.addEventListener("click", () => { window.location.href = "games/sentence-guess.html"; });
@@ -8711,8 +8732,6 @@
   backToMainBtn.addEventListener("click", () => navigateTo("main"));
   gamesBackToMainBtn.addEventListener("click", () => navigateTo("main"));
   toolsBackToMainBtn.addEventListener("click", () => navigateTo("main"));
-  wordleBackToGamesBtn.addEventListener("click", () => { window.location.href = "games/index.html"; });
-  wordleBackToMainBtn.addEventListener("click", () => navigateTo("main"));
   sentenceGuessBackToGamesBtn.addEventListener("click", () => { window.location.href = "games/index.html"; });
   sentenceGuessBackToMainBtn.addEventListener("click", () => navigateTo("main"));
   spinWheelBackToGamesBtn.addEventListener("click", () => { window.location.href = "games/index.html"; });

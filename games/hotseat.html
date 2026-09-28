@@ -96,6 +96,14 @@
     .control{flex:1 1 145px;padding:0 15px}
   }
   @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+  /* Match the shared Memory Match header and keep the game within the viewport. */
+  html,body{height:100%;overflow:hidden}
+  .app{height:100vh;min-height:0;padding:0}
+  .topbar{min-height:64px;padding:10px 16px;flex-wrap:nowrap;background:rgba(255,255,255,.92);border-bottom:1px solid #d9e4ef;backdrop-filter:blur(8px)}
+  .logo{width:40px;height:40px;border-radius:12px;background:#20324a;color:#fff;font-size:21px;box-shadow:0 8px 18px rgba(32,50,74,.15)}
+  .title{font-size:clamp(1.35rem,2.2vw,2rem);color:#20324a;letter-spacing:0}.sub{margin-top:2px;color:#718096;font-size:13px;font-weight:700}.btn{min-height:40px;border-radius:12px;padding:0 14px;color:#526278;background:#f5f8fb;border:1px solid #d9e4ef;backdrop-filter:none}.btn-primary{background:#20324a;color:#fff;box-shadow:none}
+  .stage{height:calc(100vh - 64px);min-height:0;padding:10px 16px}.game-card{height:100%;min-height:0;border-radius:26px}.status-row{padding:14px 20px 6px}.word-zone{padding:16px 36px}.word{font-size:clamp(44px,8vw,110px)}.helper{margin-top:14px;font-size:clamp(14px,1.5vw,19px)}.controls{padding:6px 18px 16px}.control{min-height:46px;font-size:16px;padding:0 20px}
 </style>
 </head>
 <body>

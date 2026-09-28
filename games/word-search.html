@@ -20,17 +20,21 @@ body {
         radial-gradient(circle at bottom right, #ede9fe, transparent 40%),
         #f8fafc;
     color: #172033;
+    height: 100vh;
+    overflow: hidden;
 }
 
 .page {
     width: min(1100px, 96%);
     margin: 0 auto;
-    padding: 30px 0 50px;
+    height: calc(100vh - 64px);
+    padding: 12px 0;
+    overflow: hidden;
 }
 
 header {
     text-align: center;
-    margin-bottom: 22px;
+    margin-bottom: 10px;
 }
 
 h1 {
@@ -50,7 +54,7 @@ h1 {
     justify-content: center;
     gap: 12px;
     flex-wrap: wrap;
-    margin-top: 18px;
+    margin-top: 0;
 }
 
 .stat {
@@ -72,7 +76,7 @@ h1 {
 
 .grid-wrap {
     position: relative;
-    width: min(730px, 100%);
+    width: min(520px, 100%);
     margin: auto;
     touch-action: none;
     user-select: none;
@@ -150,12 +154,12 @@ h1 {
 .instructions {
     text-align: center;
     color: #64748b;
-    margin: 18px 0 8px;
+    margin: 8px 0 4px;
     font-size: .94rem;
 }
 
 .words-section {
-    margin-top: 28px;
+    margin-top: 12px;
 }
 
 .words-heading {
@@ -180,14 +184,14 @@ h1 {
 .word-list {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(125px, 1fr));
-    gap: 10px;
+    gap: 6px;
 }
 
 .word {
     background: white;
     border: 2px solid #e2e8f0;
     border-radius: 12px;
-    padding: 10px 8px;
+    padding: 6px 8px;
     text-align: center;
     font-weight: 800;
     letter-spacing: .5px;
@@ -262,14 +266,11 @@ button.control:hover {
 </style>
 </head>
 
-<body>
+<body data-game-title="Word Search" data-game-subtitle="Find every hidden word" data-game-icon="🔎">
 
 <div class="page">
 
 <header>
-    <h1>Word Search</h1>
-    <div class="subtitle">Find the hidden words!</div>
-
     <div class="stats">
         <div class="stat">
             Found: <span id="foundCount">0</span>/<span id="totalCount">0</span>

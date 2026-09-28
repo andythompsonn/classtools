@@ -38,11 +38,12 @@ body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-ser
 .instructions{margin:0 0 10px;padding-left:20px;line-height:1.5}.message{font-size:1.08rem;font-weight:800;text-align:center;min-height:28px;margin-top:12px}.win{color:#16713a}.lose{color:#a11f2f}
 @media(max-width:800px){.layout{grid-template-columns:1fr}.scene{min-height:330px}.shark{transform:scale(.8) translateX(-55px);transform-origin:left center}.shark.attack{animation:attackMobile .9s ease-in forwards}@keyframes attackMobile{to{transform:scale(.8) translateX(360px)}}.fish{right:5%}}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}}
+@media (min-width:801px){body{height:100vh;overflow:hidden}.game{height:calc(100vh - 64px);padding:12px 22px;overflow:hidden}.scene{min-height:clamp(280px,48vh,400px)}}
 </style>
 </head>
-<body>
+<body data-game-title="Shark Word Quest" data-game-subtitle="Solve the word before the shark arrives" data-game-icon="🦈">
 <main class="game">
-  <div class="top"><h1 class="title">🦈 Shark Word Quest</h1><div class="badge">Wrong guesses: <span id="wrongCount">0</span> / 7</div></div>
+  <div class="top"><div class="badge">Wrong guesses: <span id="wrongCount">0</span> / 7</div></div>
   <div class="layout">
     <section class="panel">
       <div class="scene" aria-label="Ocean scene showing the shark getting closer after wrong guesses">

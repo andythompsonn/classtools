@@ -5,8 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Y5A Tasks</title>
 <link rel="stylesheet" href="css/styles.css">
+<link rel="stylesheet" href="games/game-nav.css">
 </head>
-<body>
+<body data-game-nav-routes="wordle,sentence-guess,spin-wheel,shark-word-quest,hotseat" data-games-home="#games">
 <div class="site-controls" id="siteControls" aria-label="Site controls" hidden>
   <div class="profile-control">
     <button class="profile-avatar" id="profileAvatarBtn" type="button" aria-label="Profile">?</button>
@@ -60,13 +61,13 @@
           </span>
         </button>
 
-        <button class="main-app-card" id="openGamesPageBtn" type="button">
+        <a class="main-app-card" href="games/index.html">
           <span class="main-app-card-icon" aria-hidden="true">🎮</span>
           <strong data-i18n-en="Games">Games</strong>
           <span data-i18n-en="Classroom games and activities can be added here.">
             Classroom games and activities can be added here.
           </span>
-        </button>
+        </a>
 
         <button class="main-app-card" id="openToolsPageBtn" type="button">
           <span class="main-app-card-icon" aria-hidden="true">🧰</span>
@@ -148,6 +149,24 @@
           <strong>Hotseat</strong>
           <span>Reveal a big word card from a saved list for a fast-paced classroom guessing game.</span>
         </button>
+
+        <a class="main-app-card" data-game-card data-game-search="memory match pairs cards" href="games/memory-match.html">
+          <span class="main-app-card-icon" aria-hidden="true">🧠</span>
+          <strong>Memory Match</strong>
+          <span>Flip cards and find every matching pair.</span>
+        </a>
+
+        <a class="main-app-card" data-game-card data-game-search="hold choose multiple choice definitions" href="games/hold-to-choose.html">
+          <span class="main-app-card-icon" aria-hidden="true">✋</span>
+          <strong>Hold to Choose</strong>
+          <span>Press and hold the answer you think is correct.</span>
+        </a>
+
+        <a class="main-app-card" data-game-card data-game-search="word search words puzzle letters" href="games/word-search.html">
+          <span class="main-app-card-icon" aria-hidden="true">🔎</span>
+          <strong>Word Search</strong>
+          <span>Find the hidden words in the letter grid.</span>
+        </a>
       </div>
     </div>
   </section>
@@ -220,26 +239,16 @@
   </section>
 
   <section class="wordle-page" id="wordlePage" hidden>
-    <button class="persistent-back" id="wordleBackToGamesBtn" type="button">
-      ← <span data-i18n-en="Back to Games">Back to Games</span>
-    </button>
-    <button class="wordle-nav-secondary" id="wordleBackToMainBtn" type="button" data-i18n-en="Main Page">
-      ⌂ Main Page
-    </button>
-
+    <header class="game-nav-topbar">
+      <div class="game-nav-brand">
+        <div><h1>Wordle</h1><div class="game-nav-subtitle">Guess the five-letter word</div></div>
+      </div>
+      <div class="top-actions">
+        <button id="wordleNewGameBtn" type="button" data-i18n-en="New Word">New Word</button>
+        <button id="wordleRevealBtn" type="button" data-i18n-en="Reveal Word">Reveal Word</button>
+      </div>
+    </header>
     <div class="wordle-shell">
-      <div class="wordle-header">
-        <h1>WORDLE</h1>
-        <p data-i18n-en="Guess the five-letter word in six tries. Tap the keyboard below to enter letters.">
-          Guess the five-letter word in six tries. Tap the keyboard below to enter letters.
-        </p>
-      </div>
-
-      <div class="wordle-controls">
-        <button class="secondary small" id="wordleNewGameBtn" type="button" data-i18n-en="New Word">New Word</button>
-        <button class="secondary small" id="wordleRevealBtn" type="button" data-i18n-en="Reveal Word">Reveal Word</button>
-      </div>
-
       <div class="wordle-message" id="wordleMessage" aria-live="polite"></div>
 
       <div class="wordle-board" id="wordleBoard" aria-label="Wordle board"></div>
@@ -737,20 +746,20 @@
 <section class="student-manager-page" id="wordManagerPage" hidden>
   <button class="persistent-back" id="wordManagerBackBtn" type="button">← Back to Main</button>
   <div class="student-manager-shell">
-    <h1>Word lists</h1>
-    <p>Create named word groups now, ready to import into selected games in a future update.</p>
+    <div class="word-library-heading"><div><span class="word-library-eyebrow">CLASSROOM LIBRARY</span><h1>Word lists</h1><p>A little vocabulary. A world of possibilities.</p></div><span class="word-library-badge">Words · Definitions · Examples</span></div>
     <div class="student-group-controls">
-      <label>Word group <select id="wordGroupSelect"></select></label>
+      <label>Current list <select id="wordGroupSelect"></select></label>
       <input id="newWordGroupName" type="text" placeholder="New group name, e.g. Ocean words">
       <button class="secondary small" id="addWordGroupBtn" type="button">Add group</button>
       <button class="secondary small" id="renameWordGroupBtn" type="button">Rename group</button>
       <button class="danger-btn small" id="deleteWordGroupBtn" type="button">Delete group</button>
     </div>
+    <h2 class="word-section-title">Add to your list</h2>
     <div class="word-entry-controls">
-      <input id="newWordInput" type="text" placeholder="Word or phrase">
-      <input id="newWordDefinitionInput" type="text" placeholder="Definition (optional)">
-      <input id="newWordSentenceInput" type="text" placeholder="Example sentence (optional)">
-      <button class="secondary" id="addSingleWordBtn" type="button">Add word</button>
+      <label>Word or phrase<input id="newWordInput" type="text" placeholder="e.g. ocean"></label>
+      <label>Definition <small>optional</small><input id="newWordDefinitionInput" type="text" placeholder="What does it mean?"></label>
+      <label>Example sentence <small>optional</small><input id="newWordSentenceInput" type="text" placeholder="Use it in a sentence"></label>
+      <button class="primary" id="addSingleWordBtn" type="button">+ Add word</button>
       <button class="secondary" id="showWordImportBtn" type="button">Import words</button>
     </div>
     <div class="batch-student-panel" id="wordImportPanel" hidden>
@@ -759,7 +768,7 @@
       <textarea class="batch-student-textarea" id="wordImportText" spellcheck="false" placeholder="W: ocean&#10;D: a very large area of salt water&#10;S: The ocean was calm today.&#10;&#10;W: coral&#10;D: a hard, colourful sea animal colony&#10;S: Coral grows in warm seas."></textarea>
       <div class="batch-student-actions"><div id="wordImportMessage" class="batch-student-message"></div><div class="right-actions"><button class="secondary small" id="cancelWordImportBtn" type="button">Cancel</button><button class="primary small" id="applyWordImportBtn" type="button">Import words, definitions, sentences</button></div></div>
     </div>
-    <p class="word-list-help">Each saved entry can include a word, its definition, and an example sentence.</p>
+    <div class="word-library-toolbar"><div><h2 class="word-section-title">Your words <span id="wordEntryCount"></span></h2><p class="word-list-help">Edit any field below. Changes save automatically when you leave the field.</p></div><input id="wordLibrarySearch" type="search" aria-label="Search this word list" placeholder="Search this list…"></div>
     <div class="word-entry-list" id="wordEntryList"></div>
   </div>
 </section>
@@ -1002,6 +1011,7 @@
 </dialog>
 
 <script defer src="js/app.js"></script>
+<script defer src="games/game-nav.js"></script>
 <dialog class="dialog report-dialog" id="reportDialog">
   <form method="dialog" id="reportForm">
     <div class="dialog-head">
