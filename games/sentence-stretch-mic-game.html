@@ -1,0 +1,1155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Sentence Stretch</title>
+<style>
+  :root{
+    --bg:#f4f7fb;
+    --panel:#ffffff;
+    --text:#182230;
+    --muted:#667085;
+    --line:#e4e7ec;
+    --accent:#5b5bd6;
+    --accent2:#7c3aed;
+    --good:#16a34a;
+    --bad:#dc2626;
+    --warn:#d97706;
+    --shadow:0 20px 60px rgba(16,24,40,.10);
+    --radius:24px;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%;overflow:hidden}
+  body{
+    margin:0;
+    font-family:Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background:
+      radial-gradient(circle at 88% 8%, rgba(130,111,255,.18), transparent 24%),
+      radial-gradient(circle at 8% 100%, rgba(65,96,255,.12), transparent 30%),
+      linear-gradient(145deg,#181a31 0%,#242342 55%,#2d2850 100%);
+    color:#fff;
+  }
+  button,input,select,textarea{font:inherit}
+  button{cursor:pointer}
+  .app{height:100vh;padding:14px 18px;overflow:hidden}
+  .shell{
+    max-width:1200px;
+    height:100%;
+    margin:0 auto;
+    display:flex;
+    flex-direction:column;
+    min-height:0;
+  }
+  .topbar{
+    display:flex;align-items:center;justify-content:space-between;gap:16px;
+    margin-bottom:10px;
+    flex:0 0 auto;
+  }
+  .brand{display:flex;align-items:center;gap:12px}
+  .logo{
+    width:48px;height:48px;border-radius:16px;
+    background:linear-gradient(135deg,var(--accent),var(--accent2));
+    display:grid;place-items:center;color:#fff;font-size:24px;
+    box-shadow:0 10px 25px rgba(91,91,214,.28)
+  }
+  .brand h1{font-size:22px;margin:0;letter-spacing:-.03em;color:#fff}
+  .brand p{margin:2px 0 0;color:#b9bce0;font-size:13px}
+  .ghost{
+    border:1px solid rgba(255,255,255,.10);
+    background:rgba(255,255,255,.07);
+    color:#eef0ff;
+    padding:10px 14px;border-radius:12px;font-weight:700;
+    backdrop-filter:blur(10px);
+    -webkit-backdrop-filter:blur(10px);
+  }
+  .ghost:hover{background:rgba(255,255,255,.12)}
+  .screen{display:none;min-height:0}
+  .screen.active{display:block;flex:1;min-height:0}
+  #gameScreen.active{overflow:hidden}
+  #setupScreen.active{overflow:auto}
+  .setup-wrap{
+    display:grid;grid-template-columns:1.1fr .9fr;gap:22px;
+    align-items:stretch;
+  }
+  .hero,.card{
+    background:rgba(255,255,255,.96);
+    color:var(--text);
+    border:1px solid rgba(228,231,236,.9);
+    border-radius:var(--radius);box-shadow:var(--shadow)
+  }
+  .hero{padding:42px}
+  .hero .eyebrow{
+    display:inline-flex;align-items:center;gap:8px;
+    padding:8px 11px;border-radius:999px;background:#f2f1ff;color:#4f46e5;
+    font-weight:800;font-size:12px;text-transform:uppercase;letter-spacing:.08em;
+  }
+  .hero h2{
+    font-size:clamp(36px,5vw,64px);line-height:.98;letter-spacing:-.055em;
+    margin:20px 0 18px;
+  }
+  .hero p{font-size:18px;line-height:1.6;color:var(--muted);max-width:650px}
+  .rule-list{display:grid;gap:12px;margin-top:28px}
+  .rule{
+    display:flex;gap:12px;align-items:flex-start;padding:14px 16px;
+    border-radius:16px;background:#f8fafc;border:1px solid #eef2f6;
+  }
+  .rule strong{display:block;margin-bottom:3px}
+  .num{
+    width:30px;height:30px;flex:0 0 30px;border-radius:10px;
+    display:grid;place-items:center;background:#ecebff;color:#4f46e5;font-weight:900
+  }
+  .setup-card{padding:30px}
+  .setup-card h3{font-size:24px;margin:0 0 6px;letter-spacing:-.03em}
+  .setup-card > p{margin:0 0 24px;color:var(--muted)}
+  .section-label{font-size:13px;font-weight:900;text-transform:uppercase;letter-spacing:.09em;color:#475467;margin:22px 0 10px}
+  .types{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .type-option input{display:none}
+  .type-option label{
+    display:flex;align-items:center;gap:10px;padding:13px 14px;
+    border:1px solid var(--line);border-radius:14px;background:#fff;font-weight:800;
+    transition:.18s ease;
+  }
+  .type-option label::before{
+    content:"";width:18px;height:18px;border-radius:6px;border:2px solid #c7cbd4;
+    background:#fff;box-shadow:inset 0 0 0 3px #fff;
+  }
+  .type-option input:checked + label{
+    border-color:#a5a5f4;background:#f7f7ff;color:#4545bd;
+  }
+  .type-option input:checked + label::before{background:var(--accent);border-color:var(--accent)}
+  .select-row{display:grid;grid-template-columns:1fr;gap:8px}
+  select{
+    width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:12px;
+    background:#fff;color:var(--text);font-weight:700;outline:none;
+  }
+  .primary{
+    width:100%;border:0;border-radius:15px;padding:15px 18px;color:#fff;
+    background:linear-gradient(135deg,var(--accent),var(--accent2));
+    font-weight:900;font-size:16px;margin-top:24px;
+    box-shadow:0 12px 30px rgba(91,91,214,.25);
+  }
+  .setup-note{font-size:12px;color:var(--muted);line-height:1.45;margin-top:12px}
+  .game-grid{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:20px}
+  .main-card{padding:28px}
+  .stats{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px;flex:0 0 auto}
+  .stat{
+    padding:6px 10px;border-radius:10px;background:#f8fafc;border:1px solid #edf1f5;
+    font-size:12px;color:var(--muted)
+  }
+  .stat b{color:var(--text);font-size:15px;margin-left:5px}
+  .challenge{
+    padding:28px;border-radius:22px;
+    background:linear-gradient(145deg,#191b32,#29264e);
+    color:#fff;min-height:230px;display:flex;flex-direction:column;justify-content:center;
+    position:relative;overflow:hidden;
+  }
+  .challenge::after{
+    content:"";position:absolute;width:220px;height:220px;border-radius:50%;
+    right:-80px;top:-90px;background:rgba(255,255,255,.06)
+  }
+  .challenge-label{
+    font-size:12px;text-transform:uppercase;letter-spacing:.12em;
+    color:#cfd1ff;font-weight:900;margin-bottom:14px
+  }
+  .sentence{
+    font-size:clamp(29px,4vw,52px);line-height:1.25;font-weight:850;
+    letter-spacing:-.035em;position:relative;z-index:1;
+  }
+  .target-word{
+    display:inline-block;padding:0 .12em;border-radius:.22em;
+    background:#ffe082;color:#332700;box-shadow:0 0 0 4px rgba(255,224,130,.12)
+  }
+  .target-row{
+    display:flex;align-items:center;justify-content:space-between;gap:12px;
+    margin-top:20px;position:relative;z-index:1
+  }
+  .target-chip{
+    display:inline-flex;align-items:center;gap:8px;padding:8px 11px;
+    border-radius:999px;background:rgba(255,255,255,.10);font-weight:800;font-size:13px
+  }
+  .mini-btn{
+    border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.08);
+    color:#fff;border-radius:11px;padding:9px 11px;font-weight:800
+  }
+  .prompt{
+    display:flex;align-items:center;gap:8px;
+    background:#fff9e8;border:1px solid #f3df9c;color:#7a5200;
+    border-radius:12px;padding:8px 11px;margin-top:8px;font-weight:750;
+    font-size:13px;flex:0 0 auto;
+  }
+  .input-card{
+    margin-top:18px;border:1px solid var(--line);border-radius:20px;padding:18px;background:#fff;
+  }
+  .input-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px}
+  .input-head h3{margin:0;font-size:18px}
+  .status{
+    display:inline-flex;align-items:center;gap:7px;color:var(--muted);font-size:12px;font-weight:800
+  }
+  .dot{width:8px;height:8px;border-radius:50%;background:#98a2b3}
+  .dot.live{background:#ef4444;box-shadow:0 0 0 6px rgba(239,68,68,.11);animation:pulse 1.5s infinite}
+  @keyframes pulse{50%{box-shadow:0 0 0 11px rgba(239,68,68,0)}}
+  textarea{
+    width:100%;min-height:108px;resize:vertical;border:1px solid var(--line);
+    border-radius:15px;padding:16px;font-size:20px;line-height:1.45;outline:none;color:var(--text)
+  }
+  textarea:focus{border-color:#9a9af0;box-shadow:0 0 0 4px rgba(91,91,214,.08)}
+  .interim{min-height:24px;margin:8px 2px 0;color:#98a2b3;font-style:italic;font-size:14px}
+  .actions{display:grid;grid-template-columns:1fr 1fr 1.2fr;gap:10px;margin-top:13px}
+  .btn{
+    border:1px solid var(--line);border-radius:13px;padding:12px 14px;background:#fff;
+    color:var(--text);font-weight:900
+  }
+  .btn.mic{background:#f7f7ff;border-color:#d6d4ff;color:#4f46e5}
+  .btn.check{background:#17182f;color:#fff;border-color:#17182f}
+  .btn:disabled{opacity:.45;cursor:not-allowed}
+  .feedback{display:none;margin-top:8px;border-radius:12px;padding:9px 12px;font-weight:800;line-height:1.3;font-size:13px;flex:0 0 auto}
+  .feedback.show{display:block}
+  .feedback.good{background:#ecfdf3;border:1px solid #abefc6;color:#067647}
+  .feedback.bad{background:#fff1f1;border:1px solid #fecaca;color:#b42318}
+  .feedback.warn{background:#fffaeb;border:1px solid #fedf89;color:#b54708}
+  .side{display:grid;gap:16px;align-content:start}
+  .side-card{padding:20px}
+  .side-card h3{font-size:16px;margin:0 0 12px}
+  .rule-mini{display:grid;gap:10px}
+  .mini-rule{display:flex;gap:9px;align-items:flex-start;color:var(--muted);font-size:13px;line-height:1.4}
+  .tick{color:var(--good);font-weight:1000}
+  .history{display:grid;gap:10px;max-height:440px;overflow:auto;padding-right:4px}
+  .history-item{padding:12px;border-radius:13px;background:#f8fafc;border:1px solid #eef2f6}
+  .history-item .turn{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#98a2b3;font-weight:900}
+  .history-item .text{margin-top:4px;font-size:14px;font-weight:700;line-height:1.4}
+  .empty{color:#98a2b3;font-size:13px;line-height:1.5}
+  .footer-actions{display:flex;gap:8px;margin-top:10px}
+  .footer-actions .ghost{flex:1}
+  .modal-backdrop{
+    position:fixed;inset:0;background:rgba(15,23,42,.45);display:none;place-items:center;padding:20px;z-index:20
+  }
+  .modal-backdrop.show{display:grid}
+  .modal{
+    width:min(560px,100%);background:#fff;border-radius:22px;padding:26px;box-shadow:0 30px 90px rgba(15,23,42,.25)
+  }
+  .modal h3{margin:0 0 8px;font-size:24px}
+  .modal p{margin:0 0 18px;color:var(--muted);line-height:1.5}
+  .modal .modal-actions{display:flex;gap:10px;justify-content:flex-end}
+  .modal .modal-actions button{width:auto;margin:0}
+  .small{font-size:12px;color:var(--muted)}
+
+  .simplified-game{
+    max-width:1000px;
+    height:100%;
+    margin:0 auto;
+    padding:16px 18px;
+    display:flex;
+    flex-direction:column;
+    min-height:0;
+    overflow:hidden;
+  }
+  .history-top{
+    margin-bottom:10px;padding:10px 12px;border:1px solid var(--line);
+    border-radius:16px;background:#fff;
+    flex:0 0 auto;
+  }
+  .history-head{
+    display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:6px;
+  }
+  .history-head h3{margin:0;font-size:15px}
+  .horizontal-history{
+    display:flex;gap:8px;overflow-x:auto;overflow-y:hidden;
+    max-height:74px;padding:1px 2px 4px;
+    scrollbar-width:thin;
+  }
+  .horizontal-history .history-item{
+    min-width:190px;max-width:280px;flex:0 0 auto;background:#f8fafc;
+    padding:8px 10px;
+  }
+  .horizontal-history .history-item .text{
+    margin-top:2px;
+    font-size:12px;
+    line-height:1.25;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .response-stage{
+    min-height:0;
+    flex:1 1 auto;
+    align-items:center;
+    text-align:center;
+    padding:20px 26px 16px;
+    overflow:hidden;
+  }
+  .response-stage .challenge-label{align-self:flex-start}
+  .response-stage .sentence{
+    width:100%;
+    display:block;
+    margin:auto 0;
+    font-size:clamp(28px,4.2vw,54px);
+    line-height:1.14;
+    max-height:42vh;
+    overflow:auto;
+  }
+  .response-stage .target-row{width:100%;margin-top:18px}
+  .big-mic{
+    margin-top:14px;border:0;color:#fff;background:rgba(255,255,255,.11);
+    border:1px solid rgba(255,255,255,.20);border-radius:999px;
+    padding:14px 22px;display:inline-flex;align-items:center;gap:10px;
+    font-weight:900;font-size:15px;box-shadow:0 10px 30px rgba(0,0,0,.14);
+    transition:transform .15s ease, background .15s ease, box-shadow .15s ease;
+    position:relative;z-index:2;
+  }
+  .big-mic:hover{transform:translateY(-1px);background:rgba(255,255,255,.16)}
+  .big-mic.listening{
+    background:#ef4444;border-color:#fb7185;
+    box-shadow:0 0 0 10px rgba(239,68,68,.10), 0 14px 34px rgba(0,0,0,.18);
+  }
+  .mic-icon{font-size:24px;line-height:1}
+  .stage-status{
+    margin-top:8px;color:#d0d5dd;justify-content:center;position:relative;z-index:2;
+  }
+  .stage-interim{
+    min-height:20px;color:#c7cadf;font-size:15px;font-style:italic;
+    margin-top:4px;position:relative;z-index:2;
+  }
+  .rules-strip{
+    display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px;
+    flex:0 0 auto;
+  }
+  .rules-strip .mini-rule{
+    padding:8px 10px;border-radius:12px;background:#f8fafc;border:1px solid #eef2f6;
+    font-size:12px;
+  }
+  .hidden-transcript{
+    position:absolute!important;width:1px!important;height:1px!important;padding:0!important;
+    margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;
+    white-space:nowrap!important;border:0!important;opacity:0!important;pointer-events:none!important;
+  }
+
+
+
+  /* Unified dark game styling */
+  #gameScreen{
+    background:transparent;
+    border-radius:24px;
+  }
+  .game-stage{
+    height:100%;
+    max-width:1080px;
+    margin:0 auto;
+    display:flex;
+    flex-direction:column;
+    min-height:0;
+    gap:8px;
+  }
+  .stage-top{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    flex:0 0 auto;
+    padding:2px 2px 0;
+  }
+  .stage-stats,.stage-actions{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    flex-wrap:wrap;
+  }
+  .stage-stat,.stage-control{
+    border:1px solid rgba(255,255,255,.10);
+    background:rgba(255,255,255,.07);
+    backdrop-filter:blur(12px);
+    -webkit-backdrop-filter:blur(12px);
+    box-shadow:0 8px 24px rgba(8,10,24,.18);
+    color:#dfe3ff;
+    border-radius:999px;
+    padding:7px 11px;
+    font-size:12px;
+    font-weight:800;
+  }
+  .stage-stat b{font-size:14px;color:#fff;margin-left:4px}
+  .stage-control{cursor:pointer}
+  .stage-control:hover{background:rgba(255,255,255,.12)}
+  .unified-stage{
+    flex:1 1 auto;
+    min-height:0;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:flex-start;
+    padding:16px 20px 14px;
+    border-radius:26px;
+    background:
+      radial-gradient(circle at 88% 8%, rgba(130,111,255,.12), transparent 24%),
+      radial-gradient(circle at 8% 100%, rgba(65,96,255,.08), transparent 30%),
+      rgba(11,13,30,.34);
+    backdrop-filter:blur(14px);
+    -webkit-backdrop-filter:blur(14px);
+    box-shadow:0 24px 70px rgba(8,10,24,.28);
+    border:1px solid rgba(255,255,255,.09);
+  }
+  .unified-stage::after{
+    width:280px;height:280px;right:-90px;top:-110px;background:rgba(255,255,255,.04)
+  }
+  .inside-history,
+  .inside-rules{
+    width:100%;
+    position:relative;
+    z-index:2;
+  }
+  .inside-heading{
+    color:#b9bce0;
+    font-size:11px;
+    font-weight:900;
+    text-transform:uppercase;
+    letter-spacing:.12em;
+    margin-bottom:6px;
+  }
+  .stage-divider{
+    width:100%;
+    height:1px;
+    background:linear-gradient(90deg,transparent,rgba(255,255,255,.16),transparent);
+    margin:8px 0 10px;
+    flex:0 0 auto;
+  }
+  .unified-stage .horizontal-history{
+    max-height:58px;
+    gap:7px;
+    padding:0 0 3px;
+    scrollbar-color:rgba(255,255,255,.18) transparent;
+  }
+  .unified-stage .history-item{
+    min-width:180px;
+    max-width:260px;
+    background:rgba(255,255,255,.07);
+    border:1px solid rgba(255,255,255,.08);
+    color:#fff;
+    border-radius:12px;
+    padding:7px 9px;
+    box-shadow:none;
+  }
+  .unified-stage .history-item .turn{
+    color:#8f95c2;
+    font-size:9px;
+    letter-spacing:.1em;
+  }
+  .unified-stage .history-item .text{
+    color:#f6f7ff;
+    font-size:13px;
+    font-weight:800;
+    line-height:1.25;
+    letter-spacing:-.015em;
+  }
+  .unified-stage .empty{
+    color:#8f95ad;
+    font-size:12px;
+    font-weight:700;
+  }
+  .unified-stage .challenge-label{
+    align-self:flex-start;
+    color:#aeb4ec;
+    margin-bottom:6px;
+    font-size:10px;
+  }
+  .unified-stage .sentence{
+    flex:1 1 auto;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    width:100%;
+    max-height:none;
+    min-height:110px;
+    overflow:auto;
+    margin:0;
+    color:#fff;
+    font-size:clamp(30px,4vw,56px);
+    line-height:1.12;
+    font-weight:850;
+    letter-spacing:-.04em;
+    text-wrap:balance;
+  }
+  .inside-prompt{
+    width:100%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    margin-top:10px;
+    padding:8px 12px;
+    border-radius:13px;
+    background:rgba(255,224,130,.10);
+    border:1px solid rgba(255,224,130,.18);
+    color:#ffe9a8;
+    font-weight:800;
+    font-size:12px;
+    position:relative;
+    z-index:2;
+  }
+  .prompt-icon{font-size:14px}
+  .inside-rules{
+    margin-top:9px;
+    flex:0 0 auto;
+  }
+  .rule-grid{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:7px;
+  }
+  .glass-rule{
+    min-height:44px;
+    display:flex;
+    align-items:flex-start;
+    gap:8px;
+    padding:8px 9px;
+    border-radius:12px;
+    background:rgba(255,255,255,.055);
+    border:1px solid rgba(255,255,255,.07);
+    color:#d9dcf4;
+    font-size:11px;
+    line-height:1.3;
+    font-weight:750;
+  }
+  .rule-dot{
+    width:18px;height:18px;flex:0 0 18px;
+    display:grid;place-items:center;
+    border-radius:6px;
+    background:rgba(110,231,183,.12);
+    color:#7ef0be;
+    font-size:11px;
+    font-weight:1000;
+  }
+  .unified-stage .big-mic{
+    margin-top:10px;
+    background:linear-gradient(135deg,rgba(111,111,255,.92),rgba(138,83,255,.92));
+    border:1px solid rgba(255,255,255,.18);
+    box-shadow:0 12px 28px rgba(77,60,170,.28);
+  }
+  .unified-stage .big-mic:hover{
+    background:linear-gradient(135deg,rgba(126,126,255,1),rgba(151,93,255,1));
+  }
+  .unified-stage .big-mic.listening{
+    background:linear-gradient(135deg,#ef4444,#e11d48);
+    border-color:rgba(255,255,255,.2);
+  }
+  .unified-stage .target-chip{
+    background:rgba(255,255,255,.09);
+    border:1px solid rgba(255,255,255,.08);
+  }
+  .unified-stage .mini-btn{
+    background:rgba(255,255,255,.07);
+  }
+  .unified-stage .feedback{
+    width:100%;
+    margin-top:8px;
+    border-radius:12px;
+  }
+
+  @media (max-height:760px) and (min-width:621px){
+    .app{padding:8px 14px}
+    .topbar{margin-bottom:6px}
+    .logo{width:40px;height:40px;border-radius:13px;font-size:20px}
+    .brand h1{font-size:18px}
+    .brand p{font-size:11px}
+    .simplified-game{padding:10px 14px}
+    .unified-stage .horizontal-history{max-height:50px}
+    .unified-stage{padding:10px 14px 10px}
+    .response-stage{padding:14px 20px 12px}
+    .unified-stage .sentence{font-size:clamp(25px,3.8vw,46px);min-height:90px}
+    .big-mic{margin-top:10px;padding:10px 17px}
+    .mic-icon{font-size:20px}
+    .stage-status{margin-top:5px}
+    .target-row{margin-top:10px}
+    .prompt{margin-top:6px;padding:6px 9px}
+    .rules-strip{margin-top:6px;gap:6px}
+    .rules-strip .mini-rule{padding:6px 8px;font-size:11px}
+    .feedback{margin-top:6px;padding:7px 10px}
+  }
+
+  @media (max-width:900px){
+    .setup-wrap,.game-grid{grid-template-columns:1fr}
+    .side{grid-template-columns:1fr 1fr}
+  }
+  @media (max-width:620px){
+    html,body{overflow:auto}
+    .app{height:auto;min-height:100vh;overflow:visible;padding:14px}
+    .hero,.setup-card,.main-card{padding:20px}
+    .types{grid-template-columns:1fr}
+    .actions{grid-template-columns:1fr}
+    .side{grid-template-columns:1fr}
+    .rule-grid{grid-template-columns:1fr}
+    .stage-top{align-items:flex-start;flex-direction:column}
+    .unified-stage{padding:14px 14px 12px}
+    .response-stage{min-height:360px;padding:26px 18px 22px}
+    .topbar{align-items:flex-start}
+    .brand p{display:none}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="shell">
+    <div class="topbar">
+      <div class="brand">
+        <div class="logo">🎙️</div>
+        <div>
+          <h1>Sentence Stretch</h1>
+          <p>Speak it. Change it. Make it longer.</p>
+        </div>
+      </div>
+      <button id="settingsBtn" class="ghost" style="display:none">⚙️ Setup</button>
+    </div>
+
+    <section id="setupScreen" class="screen active">
+      <div class="setup-wrap">
+        <div class="hero">
+          <div class="eyebrow">Speaking + grammar game</div>
+          <h2>Stretch the sentence.</h2>
+          <p>Each student repeats the idea, changes the highlighted word, and adds something new. The sentence keeps growing until someone breaks the chain.</p>
+          <div class="rule-list">
+            <div class="rule"><div class="num">1</div><div><strong>Student 1 starts</strong>Say any short sentence, such as “I went to the beach.”</div></div>
+            <div class="rule"><div class="num">2</div><div><strong>The game chooses a target</strong>A word is highlighted using the word types you allow.</div></div>
+            <div class="rule"><div class="num">3</div><div><strong>The next student stretches it</strong>Change the highlighted word and add at least one genuinely new word.</div></div>
+          </div>
+        </div>
+
+        <div class="card setup-card">
+          <h3>Teacher setup</h3>
+          <p>Choose which word types the game may highlight.</p>
+
+          <div class="section-label">Target word types</div>
+          <div class="types">
+            <div class="type-option"><input id="verb" type="checkbox" value="verb" checked><label for="verb">Verbs</label></div>
+            <div class="type-option"><input id="noun" type="checkbox" value="noun" checked><label for="noun">Nouns</label></div>
+            <div class="type-option"><input id="adjective" type="checkbox" value="adjective" checked><label for="adjective">Adjectives</label></div>
+            <div class="type-option"><input id="adverb" type="checkbox" value="adverb" checked><label for="adverb">Adverbs</label></div>
+            <div class="type-option"><input id="pronoun" type="checkbox" value="pronoun"><label for="pronoun">Pronouns</label></div>
+            <div class="type-option"><input id="preposition" type="checkbox" value="preposition"><label for="preposition">Prepositions</label></div>
+          </div>
+
+          <div class="section-label">Speech recognition</div>
+          <div class="select-row">
+            <select id="speechLang">
+              <option value="en-GB" selected>English (UK)</option>
+              <option value="en-US">English (US)</option>
+              <option value="en-AU">English (Australia)</option>
+              <option value="en-CA">English (Canada)</option>
+            </select>
+          </div>
+
+          <button id="startGameBtn" class="primary">Start game →</button>
+          <div class="setup-note">Word-type detection uses lightweight classroom-friendly rules in the browser, so the teacher can use “Pick another target” if a word is classified oddly.</div>
+        </div>
+      </div>
+    </section>
+
+    <section id="gameScreen" class="screen">
+      <main class="game-stage">
+        <div class="stage-top">
+          <div class="stage-stats">
+            <div class="stage-stat">Turn <b id="turnStat">1</b></div>
+            <div class="stage-stat">Length <b id="lengthStat">0</b> words</div>
+          </div>
+          <div class="stage-actions">
+            <button id="undoBtn" class="stage-control">↶ Undo</button>
+            <button id="newRoundBtn" class="stage-control">↻ New round</button>
+          </div>
+        </div>
+
+        <span id="streakStat" style="display:none">0</span>
+        <div id="challengeBox" class="challenge response-stage unified-stage">
+          <div class="inside-history">
+            <div class="inside-heading">Sentence history</div>
+            <div id="history" class="history horizontal-history">
+              <div class="empty">Accepted sentences will appear here.</div>
+            </div>
+          </div>
+
+          <div class="stage-divider"></div>
+
+          <div class="challenge-label" id="challengeLabel">First student</div>
+          <div class="sentence" id="sentenceDisplay">Say any short sentence to begin.</div>
+          <div id="interimText" class="stage-interim"></div>
+
+          <div class="target-row" id="targetRow" style="display:none">
+            <div class="target-chip" id="targetChip">Target: —</div>
+            <button id="rerollBtn" class="mini-btn">↻ Pick another target</button>
+          </div>
+
+          <button id="micBtn" class="big-mic" aria-label="Start microphone">
+            <span class="mic-icon">🎙️</span>
+            <span id="micButtonText">Tap to speak</span>
+          </button>
+
+          <div class="status stage-status">
+            <span id="statusDot" class="dot"></span>
+            <span id="micStatus">Ready</span>
+          </div>
+
+          <div id="promptBox" class="inside-prompt">
+            <span class="prompt-icon">🎯</span>
+            <span id="promptText">Start with a sentence of at least 3 words.</span>
+          </div>
+
+          <div class="inside-rules">
+            <div class="inside-heading">Rules</div>
+            <div class="rule-grid">
+              <div class="glass-rule"><span class="rule-dot">✓</span><span id="ruleChange">Begin with any short sentence.</span></div>
+              <div class="glass-rule"><span class="rule-dot">✓</span><span id="ruleLonger">At least 3 words.</span></div>
+              <div class="glass-rule"><span class="rule-dot">✓</span><span id="ruleNew">Speak clearly, then press the microphone again.</span></div>
+            </div>
+          </div>
+
+          <textarea id="speechText" class="hidden-transcript" aria-hidden="true" tabindex="-1"></textarea>
+          <div id="feedback" class="feedback"></div>
+        </div>
+      </main>
+    </section>
+  </div>
+</div>
+
+<div id="confirmModal" class="modal-backdrop">
+  <div class="modal">
+    <h3>Start a new round?</h3>
+    <p>This clears the current sentence chain and score.</p>
+    <div class="modal-actions">
+      <button id="cancelReset" class="ghost">Cancel</button>
+      <button id="confirmReset" class="primary">Start new round</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+
+  const state = {
+    allowedTypes: new Set(["verb","noun","adjective","adverb"]),
+    speechLang: "en-GB",
+    currentSentence: "",
+    currentTokens: [],
+    target: null,
+    candidates: [],
+    history: [],
+    streak: 0,
+    listening: false,
+    recognition: null,
+    finalTranscript: "",
+    submitOnEnd: false
+  };
+
+  // Lightweight POS heuristics. This is deliberately small and fast so the game
+  // remains a single HTML file. Teachers can reroll a target if classification is odd.
+  const lex = {
+    pronoun: new Set("i me you he him she her it we us they them my your his its our their mine yours hers ours theirs who whom whose this that these those".split(" ")),
+    preposition: new Set("to from in on at by for with about against between into through during before after above below under over of off near around beside behind across toward towards without within".split(" ")),
+    conjunction: new Set("and but or so because although though while if when unless since yet nor".split(" ")),
+    determiner: new Set("a an the some any each every this that these those my your his her its our their".split(" ")),
+    verb: new Set(("am is are was were be been being have has had do does did go goes went gone going come comes came coming get gets got getting make makes made making " +
+      "say says said saying see sees saw seen seeing know knows knew known knowing think thinks thought thinking take takes took taken taking want wants wanted wanting " +
+      "give gives gave given giving use uses used using find finds found finding tell tells told telling ask asks asked asking work works worked working seem seems seemed " +
+      "feel feels felt feeling try tries tried trying leave leaves left leaving call calls called calling run runs ran running walk walks walked walking play plays played " +
+      "eat eats ate eaten eating drink drinks drank drunk drinking read reads reading write writes wrote written writing meet meets met meeting visit visits visited visiting " +
+      "watch watches watched watching talk talks talked talking speak speaks spoke spoken speaking study studies studied studying learn learns learned learning help helps helped helping " +
+      "like likes liked liking love loves loved loving need needs needed needing become becomes became becoming keep keeps kept keeping start starts started starting stop stops stopped stopping " +
+      "look looks looked looking climb climbs climbed climbing jump jumps jumped jumping swim swims swam swimming drive drives drove driven driving ride rides rode ridden riding buy buys bought buying").split(" ")),
+    adjective: new Set(("good bad big small large little long short tall tiny huge happy sad angry excited tired hungry thirsty hot cold warm cool fast slow old young new beautiful ugly " +
+      "fun funny interesting boring amazing wonderful terrible scary quiet loud bright dark red blue green yellow black white purple orange pink kind brave clever smart strong weak busy free " +
+      "easy hard difficult important different same special favorite favourite delicious sweet sour salty spicy friendly careful dangerous safe famous popular traditional modern ancient").split(" ")),
+    adverb: new Set(("very really quite too so always never often sometimes usually quickly slowly carefully loudly quietly happily sadly easily badly well yesterday today tomorrow now then soon already " +
+      "here there outside inside together apart away back again almost also just still even only maybe perhaps probably definitely suddenly finally early late").split(" "))
+  };
+
+  const punctuationTrim = s => s.replace(/[“”"'.!?;,:[\]{}()]/g, "");
+  const normalize = s => punctuationTrim(s.toLowerCase()).trim();
+  const words = s => (s.match(/[A-Za-z]+(?:['’][A-Za-z]+)?/g) || []).map(w => w.replace("’","'"));
+  const normalizedWords = s => words(s).map(normalize).filter(Boolean);
+
+  function guessType(word, index, tokens){
+    const w = normalize(word);
+    if (!w) return "other";
+    if (lex.pronoun.has(w)) return "pronoun";
+    if (lex.preposition.has(w)) return "preposition";
+    if (lex.conjunction.has(w) || lex.determiner.has(w)) return "other";
+    if (lex.verb.has(w)) return "verb";
+    if (lex.adverb.has(w) || w.endsWith("ly")) return "adverb";
+    if (lex.adjective.has(w) || /(ous|ful|less|able|ible|ive|al|ic|ish|y)$/.test(w)) return "adjective";
+    if (/(ing|ed|en)$/.test(w)) return "verb";
+    if (/(tion|ment|ness|ity|ship|er|or|ist|ism|age|ance|ence)$/.test(w)) return "noun";
+
+    // After a determiner, possessive, or adjective, a content word is often a noun.
+    const prev = index > 0 ? normalize(tokens[index-1]) : "";
+    if (lex.determiner.has(prev) || ["my","your","his","her","our","their"].includes(prev)) return "noun";
+
+    // A content-word fallback makes common classroom nouns available without a huge dictionary.
+    if (w.length > 2 && !lex.pronoun.has(w) && !lex.preposition.has(w)) return "noun";
+    return "other";
+  }
+
+  function eligibleCandidates(sentence){
+    const tokens = words(sentence);
+    return tokens.map((word,index) => ({word,index,type:guessType(word,index,tokens)}))
+      .filter(x => state.allowedTypes.has(x.type));
+  }
+
+  function renderSentence(sentence, target){
+    const display = $("sentenceDisplay");
+    display.innerHTML = "";
+    if (!sentence){
+      display.textContent = "Say any short sentence to begin.";
+      return;
+    }
+
+    const re = /[A-Za-z]+(?:['’][A-Za-z]+)?/g;
+    let last = 0, idx = 0, match;
+    while ((match = re.exec(sentence)) !== null){
+      display.append(document.createTextNode(sentence.slice(last, match.index)));
+      if (target && idx === target.index){
+        const span = document.createElement("span");
+        span.className = "target-word";
+        span.textContent = match[0];
+        display.append(span);
+      } else {
+        display.append(document.createTextNode(match[0]));
+      }
+      last = match.index + match[0].length;
+      idx++;
+    }
+    display.append(document.createTextNode(sentence.slice(last)));
+  }
+
+  function chooseTarget(excludeIndex = null){
+    state.candidates = eligibleCandidates(state.currentSentence);
+    if (!state.candidates.length){
+      state.target = null;
+      renderSentence(state.currentSentence, null);
+      $("targetRow").style.display = "none";
+      $("promptText").textContent = "No selected word type was found. Try a different sentence or change the teacher setup.";
+      return false;
+    }
+    let pool = state.candidates;
+    if (excludeIndex !== null && pool.length > 1) pool = pool.filter(x => x.index !== excludeIndex);
+    state.target = pool[Math.floor(Math.random() * pool.length)];
+    renderSentence(state.currentSentence, state.target);
+    $("targetRow").style.display = "flex";
+    $("targetChip").textContent = `Target: ${state.target.word} · ${state.target.type}`;
+    updateTurnRules();
+    return true;
+  }
+
+  function setFeedback(kind, html){
+    const f = $("feedback");
+    f.className = `feedback show ${kind}`;
+    f.innerHTML = html;
+  }
+  function clearFeedback(){
+    const f = $("feedback");
+    f.className = "feedback";
+    f.textContent = "";
+  }
+
+  function updateStats(){
+    $("turnStat").textContent = state.history.length + 1;
+    $("streakStat").textContent = state.streak;
+    $("lengthStat").textContent = state.currentTokens.length;
+  }
+
+  function updateHistory(){
+    const h = $("history");
+    h.innerHTML = "";
+    if (!state.history.length){
+      h.innerHTML = '<div class="empty">Accepted sentences will appear here.</div>';
+      return;
+    }
+    [...state.history].reverse().forEach((item, reverseIndex) => {
+      const realTurn = state.history.length - reverseIndex;
+      const card = document.createElement("div");
+      card.className = "history-item";
+      const t = document.createElement("div");
+      t.className = "turn";
+      t.textContent = `Turn ${realTurn}`;
+      const txt = document.createElement("div");
+      txt.className = "text";
+      txt.textContent = item.sentence;
+      card.append(t,txt);
+      h.append(card);
+    });
+  }
+
+  function updateTurnRules(){
+    if (!state.currentSentence){
+      $("challengeLabel").textContent = "First student";
+      $("promptText").textContent = "Start with a sentence of at least 3 words.";
+      $("ruleChange").textContent = "Begin with any short sentence.";
+      $("ruleLonger").textContent = "At least 3 words.";
+      $("ruleNew").textContent = "Speak clearly, then check the transcript.";
+      $("targetRow").style.display = "none";
+      renderSentence("", null);
+      return;
+    }
+    $("challengeLabel").textContent = "Next student";
+    const target = state.target ? state.target.word : "the highlighted word";
+    $("promptText").textContent = `Change “${target}” and add at least one new word.`;
+    $("ruleChange").textContent = `Replace the highlighted word “${target}”.`;
+    $("ruleLonger").textContent = `Make it longer than ${state.currentTokens.length} words.`;
+    $("ruleNew").textContent = "Include at least one word that was not in the previous sentence.";
+  }
+
+  function startGame(){
+    const checked = [...document.querySelectorAll('.type-option input:checked')].map(x => x.value);
+    if (!checked.length){
+      alert("Choose at least one target word type.");
+      return;
+    }
+    state.allowedTypes = new Set(checked);
+    state.speechLang = $("speechLang").value;
+    resetRound(false);
+    $("setupScreen").classList.remove("active");
+    $("gameScreen").classList.add("active");
+    $("settingsBtn").style.display = "inline-block";
+    setupRecognition();
+  }
+
+  function resetRound(keepScreen = true){
+    stopRecognition();
+    state.currentSentence = "";
+    state.currentTokens = [];
+    state.target = null;
+    state.candidates = [];
+    state.history = [];
+    state.streak = 0;
+    state.finalTranscript = "";
+    $("speechText").value = "";
+    $("interimText").textContent = "";
+    clearFeedback();
+    updateStats();
+    updateHistory();
+    updateTurnRules();
+
+  }
+
+  function validateCandidate(sentence){
+    const newTokens = normalizedWords(sentence);
+    if (!state.currentSentence){
+      if (newTokens.length < 3){
+        return {ok:false, reasons:["Your first sentence needs at least 3 words."]};
+      }
+      const candidates = eligibleCandidates(sentence);
+      if (!candidates.length){
+        return {ok:false, reasons:["I could not find a word matching the target types selected by the teacher. Try a sentence with one of those word types."]};
+      }
+      return {ok:true, tokens:newTokens};
+    }
+
+    const reasons = [];
+    const prev = state.currentTokens;
+    const target = normalize(state.target?.word || "");
+    if (newTokens.length <= prev.length){
+      reasons.push(`Make the sentence longer than ${prev.length} words.`);
+    }
+    if (target && newTokens.includes(target)){
+      reasons.push(`Change the highlighted word “${state.target.word}” instead of keeping it.`);
+    }
+    const prevSet = new Set(prev);
+    const added = newTokens.filter(w => !prevSet.has(w));
+    if (!added.length){
+      reasons.push("Add at least one genuinely new word that was not in the previous sentence.");
+    }
+    if (newTokens.length < 3){
+      reasons.push("The sentence is too short.");
+    }
+
+    // Ensure the next accepted sentence still has a legal target for the following player.
+    const nextCandidates = eligibleCandidates(sentence);
+    if (!nextCandidates.length){
+      reasons.push("This sentence has no word matching the teacher's selected target types. Add one so the next player has a target.");
+    }
+
+    return reasons.length ? {ok:false,reasons} : {ok:true,tokens:newTokens,added};
+  }
+
+  function acceptSentence(){
+    const sentence = $("speechText").value.trim().replace(/\s+/g," ");
+    if (!sentence){
+      setFeedback("bad","Say or type a sentence first.");
+      return;
+    }
+    const result = validateCandidate(sentence);
+    if (!result.ok){
+      setFeedback("bad","<strong>Not yet.</strong><br>" + result.reasons.map(r => "• " + r).join("<br>"));
+      return;
+    }
+
+    state.currentSentence = sentence;
+    state.currentTokens = result.tokens;
+    state.history.push({sentence});
+    if (state.history.length > 1) state.streak++;
+
+    state.finalTranscript = "";
+    $("speechText").value = "";
+    $("interimText").textContent = "";
+    clearFeedback();
+    updateStats();
+    updateHistory();
+
+    if (chooseTarget()){
+      const addedText = result.added?.length ? ` New word${result.added.length>1?"s":""}: <strong>${[...new Set(result.added)].slice(0,4).join(", ")}</strong>.` : "";
+      setFeedback("good", `<strong>Accepted!</strong>${addedText} Pass the microphone to the next student.`);
+    } else {
+      setFeedback("warn","Sentence accepted, but the game could not find a matching target word. Change the setup or start a new round.");
+    }
+  }
+
+  function undo(){
+    if (!state.history.length) return;
+    state.history.pop();
+    state.streak = Math.max(0, state.history.length - 1);
+    if (!state.history.length){
+      state.currentSentence = "";
+      state.currentTokens = [];
+      state.target = null;
+      updateTurnRules();
+    } else {
+      state.currentSentence = state.history[state.history.length-1].sentence;
+      state.currentTokens = normalizedWords(state.currentSentence);
+      chooseTarget();
+    }
+    clearFeedback();
+    $("speechText").value = "";
+    updateStats();
+    updateHistory();
+  }
+
+  function setupRecognition(){
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition){
+      state.recognition = null;
+      $("micBtn").disabled = true;
+      $("micStatus").textContent = "Microphone speech recognition unavailable";
+      setFeedback("warn","This browser does not provide speech recognition. Chrome or Edge usually works best for this microphone-only version.");
+      return;
+    }
+
+    const r = new SpeechRecognition();
+    r.lang = state.speechLang;
+    r.continuous = true;
+    r.interimResults = true;
+    r.maxAlternatives = 1;
+
+    r.onstart = () => {
+      state.listening = true;
+      $("statusDot").classList.add("live");
+      $("micStatus").textContent = "Listening… tap the microphone again when finished";
+      $("micBtn").classList.add("listening");
+      $("micButtonText").textContent = "Tap when finished";
+    };
+
+    r.onresult = event => {
+      let interim = "";
+      let newFinal = "";
+      for (let i = event.resultIndex; i < event.results.length; i++){
+        const transcript = event.results[i][0].transcript;
+        if (event.results[i].isFinal) newFinal += transcript + " ";
+        else interim += transcript;
+      }
+      if (newFinal){
+        const existing = $("speechText").value.trim();
+        $("speechText").value = (existing ? existing + " " : "") + newFinal.trim();
+      }
+      const currentSpoken = $("speechText").value.trim();
+      if (currentSpoken || interim){
+        const liveText = [currentSpoken, interim].filter(Boolean).join(" ");
+        renderSentence(liveText, null);
+      }
+      $("interimText").textContent = interim ? `Hearing: ${interim}` : "";
+    };
+
+    r.onerror = event => {
+      if (event.error !== "no-speech") state.submitOnEnd = false;
+      if (event.error === "not-allowed" || event.error === "service-not-allowed"){
+        setFeedback("bad","Microphone access was blocked. Allow microphone permission in the browser, or type the sentence instead.");
+      } else if (event.error !== "aborted" && event.error !== "no-speech"){
+        setFeedback("warn",`Speech recognition issue: ${event.error}. You can type the sentence instead.`);
+      }
+    };
+
+    r.onend = () => {
+      state.listening = false;
+      $("statusDot").classList.remove("live");
+      $("micStatus").textContent = "Ready";
+      $("micBtn").classList.remove("listening");
+      $("micButtonText").textContent = "Tap to speak";
+      $("interimText").textContent = "";
+
+      if (state.submitOnEnd){
+        state.submitOnEnd = false;
+        if ($("speechText").value.trim()){
+          acceptSentence();
+        } else {
+          renderSentence(state.currentSentence || "", state.target);
+          setFeedback("warn","I didn't hear a sentence. Tap the microphone and try again.");
+        }
+      }
+    };
+
+    state.recognition = r;
+    $("micBtn").disabled = false;
+    $("micStatus").textContent = "Ready";
+  }
+
+  function toggleMic(){
+    clearFeedback();
+    if (!state.recognition) return;
+    if (state.listening){
+      state.submitOnEnd = true;
+      stopRecognition();
+      return;
+    }
+    try{
+      $("speechText").value = "";
+      $("interimText").textContent = "";
+      clearFeedback();
+      renderSentence("Listening…", null);
+      state.recognition.lang = state.speechLang;
+      state.recognition.start();
+    } catch(e){
+      // Some browsers throw if start is pressed again too quickly.
+    }
+  }
+
+  function stopRecognition(){
+    if (state.recognition && state.listening){
+      try{ state.recognition.stop(); }catch(e){}
+    }
+  }
+
+  $("startGameBtn").addEventListener("click", startGame);
+  $("settingsBtn").addEventListener("click", () => {
+    stopRecognition();
+    $("gameScreen").classList.remove("active");
+    $("setupScreen").classList.add("active");
+    $("settingsBtn").style.display = "none";
+  });
+  $("micBtn").addEventListener("click", toggleMic);
+  $("rerollBtn").addEventListener("click", () => {
+    if (!state.target) return;
+    chooseTarget(state.target.index);
+  });
+  $("undoBtn").addEventListener("click", undo);
+
+  $("newRoundBtn").addEventListener("click", () => $("confirmModal").classList.add("show"));
+  $("cancelReset").addEventListener("click", () => $("confirmModal").classList.remove("show"));
+  $("confirmReset").addEventListener("click", () => {
+    $("confirmModal").classList.remove("show");
+    resetRound();
+  });
+
+  $("speechText").addEventListener("keydown", e => {
+    if ((e.ctrlKey || e.metaKey) && e.key === "Enter") acceptSentence();
+  });
+
+  updateStats();
+  updateHistory();
+  updateTurnRules();
+})();
+</script>
+</body>
+</html>
