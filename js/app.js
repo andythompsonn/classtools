@@ -32,6 +32,7 @@
   }
   function updateGithubSyncUI(){
     githubSyncEnabled.checked = !!githubSyncEnabledForProfile();
+    profileSyncMode.value = githubSyncEnabledForProfile() ? "server" : "local";
     const enabled = githubSyncEnabledForProfile();
     if (!enabled) setGithubSyncStatus("", "GitHub sync is off — local JSON saving is in use.");
   }
@@ -85,19 +86,14 @@
       return bundle;
     }catch(error){ console.warn("Could not load GitHub JSON:", error); setGithubSyncStatus("error", `Could not load server JSON: ${error.message}`); return null; }
   }
-  function chooseGithubData(bundle){
-    if (!bundle) return false;
-    const useServerData = confirm(
-      "Saved data was found on GitHub for this username.\n\n" +
-      "Press OK to use the server data.\n" +
-      "Press Cancel to keep this device's local data."
-    );
-    if (useServerData){
-      applyGithubSyncBundle(bundle);
+  async function useGithubServerData(){
+    const remoteBundle = await loadGithubSyncFile();
+    if (remoteBundle){
+      applyGithubSyncBundle(remoteBundle);
       setGithubSyncStatus("connected", "Using the GitHub server data.");
       return true;
     }
-    setGithubSyncStatus("warning", "Using local data. Your next save will replace the GitHub copy.");
+    await saveGithubSyncFile();
     return false;
   }
   async function saveGithubSyncFile(){
@@ -215,8 +211,6 @@
   const sharkWordPage = document.getElementById("sharkWordPage");
   const hotseatPage = document.getElementById("hotseatPage");
   const tasksPage = document.getElementById("tasksPage");
-  const openTasksPageBtn = document.getElementById("openTasksPageBtn");
-  const openToolsPageBtn = document.getElementById("openToolsPageBtn");
   const openWordlePageBtn = document.getElementById("openWordlePageBtn");
   const openSentenceGuessPageBtn = document.getElementById("openSentenceGuessPageBtn");
   const openSpinWheelPageBtn = document.getElementById("openSpinWheelPageBtn");
@@ -409,6 +403,7 @@
   const loginError = document.getElementById("loginError");
   const createAccountBtn = document.getElementById("createAccountBtn");
   const profileAvatarBtn = document.getElementById("profileAvatarBtn");
+  const profileSyncMode = document.getElementById("profileSyncMode");
   const profileMenu = document.getElementById("profileMenu");
   const profileNameLabel = document.getElementById("profileNameLabel");
   const avatarPicker = document.getElementById("avatarPicker");
@@ -488,8 +483,8 @@
     if (loginDialog.open) loginDialog.close();
     githubSyncReady = false;
     updateGithubSyncUI();
-    chooseGithubData(await loadGithubSyncFile());
     githubSyncReady = true;
+    if (githubSyncEnabledForProfile()) await useGithubServerData();
     render(); renderSpinWheel(); applyRoute(); applyTranslations(document);
     if (!githubSyncEnabledForProfile()) restoreJsonSaveConnection();
     else updateJsonSaveUI("idle", "GitHub server JSON is active.");
@@ -508,6 +503,17 @@
     all[username] = {password, avatar:Math.floor(Math.random() * 30)}; saveAccounts(all); activateProfile(username);
   });
   profileAvatarBtn.addEventListener("click", () => { profileMenu.hidden = !profileMenu.hidden; });
+  profileSyncMode.addEventListener("change", async () => {
+    const useServer = profileSyncMode.value === "server";
+    profileSet(GITHUB_SYNC_ENABLED_KEY, String(useServer));
+    githubSyncReady = true;
+    updateGithubSyncUI();
+    if (useServer) await useGithubServerData();
+    else {
+      await restoreJsonSaveConnection();
+      updateJsonSaveUI(jsonFileHandle ? "connected" : "idle");
+    }
+  });
   buildAvatarPicker();
   profileAddStudentsBtn.addEventListener("click", () => {
     profileMenu.hidden = true;
@@ -7082,9 +7088,7 @@
     githubSyncReady = true;
     updateGithubSyncUI();
     if (githubSyncEnabled.checked){
-      const remoteBundle = await loadGithubSyncFile();
-      if (remoteBundle) chooseGithubData(remoteBundle);
-      else await saveGithubSyncFile();
+      await useGithubServerData();
     }
   });
 
@@ -8820,8 +8824,6 @@
     }
   });
 
-  openTasksPageBtn.addEventListener("click", () => navigateTo("tasks"));
-  openToolsPageBtn.addEventListener("click", () => { window.location.href = "tools/index.html"; });
   openWordlePageBtn.addEventListener("click", () => { window.location.href = "games/wordle.html"; });
   openSentenceGuessPageBtn.addEventListener("click", () => { window.location.href = "games/sentence-guess.html"; });
   openSpinWheelPageBtn.addEventListener("click", () => { window.location.href = "games/spin-wheel.html"; });

@@ -13,6 +13,12 @@
     <button class="profile-avatar" id="profileAvatarBtn" type="button" aria-label="Profile">?</button>
     <div class="profile-menu" id="profileMenu" hidden>
       <strong id="profileNameLabel"></strong>
+      <label class="profile-sync-choice">Save location
+        <select id="profileSyncMode" aria-label="Save location">
+          <option value="server">Server JSON</option>
+          <option value="local">Local JSON file</option>
+        </select>
+      </label>
       <button class="secondary small" id="profileManageWordsBtn" type="button">Manage word lists</button>
       <button class="secondary small" id="profileAddStudentsBtn" type="button">Manage student lists</button>
       <div class="avatar-picker-label">Choose avatar</div>
@@ -53,13 +59,13 @@
       </p>
 
       <div class="main-app-grid">
-        <button class="main-app-card" id="openTasksPageBtn" type="button">
+        <a class="main-app-card" href="#tasks">
           <span class="main-app-card-icon" aria-hidden="true">✓</span>
           <strong data-i18n-en="Tasks">Tasks</strong>
           <span data-i18n-en="Open your student and teacher task checklist, archive, table view, notes, timer, and more.">
             Open your student and teacher task checklist, archive, table view, notes, timer, and more.
           </span>
-        </button>
+        </a>
 
         <a class="main-app-card" href="games/index.html">
           <span class="main-app-card-icon" aria-hidden="true">🎮</span>
@@ -69,11 +75,11 @@
           </span>
         </a>
 
-        <button class="main-app-card" id="openToolsPageBtn" type="button">
+        <a class="main-app-card" href="#tools">
           <span class="main-app-card-icon" aria-hidden="true">🧰</span>
           <strong>Tools</strong>
           <span>Classroom clocks, timers, and helpful teaching tools.</span>
-        </button>
+        </a>
       </div>
     </div>
   </section>

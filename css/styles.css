@@ -659,6 +659,8 @@ body.update-log-open .project-shell{
   .profile-avatar.has-animal{ background-image:url("../assets/animal-avatars.png"); background-size:600% 500%; background-repeat:no-repeat; color:transparent; }
   .profile-menu{ position:absolute; top:44px; right:0; min-width:218px; padding:10px; border:1px solid var(--line); border-radius:10px; background:white; box-shadow:var(--shadow); }
   .profile-menu strong{ display:block; margin-bottom:8px; }
+  .profile-sync-choice{display:grid;gap:5px;margin:0 0 8px;color:var(--muted);font-size:12px;font-weight:750}
+  .profile-sync-choice select{width:100%;padding:8px;border:1px solid var(--line);border-radius:8px;background:#fff;font:inherit;color:var(--text)}
   .profile-menu button{ width:100%; margin-top:6px; }
   .avatar-picker-label{ margin:4px 0 6px; color:var(--muted); font-size:12px; font-weight:750; }
   .avatar-picker{ display:grid; grid-template-columns:repeat(6,1fr); gap:5px; }
