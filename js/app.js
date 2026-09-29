@@ -13,7 +13,6 @@
   const WORD_GROUPS_KEY = "y5a_word_groups_v1";
   const SHARK_WORD_SOURCE_KEY = "y5a_shark_word_source_v1";
   const JSON_SETUP_DISMISSED_KEY = "y5a_json_setup_dismissed_v1";
-  const GITHUB_SYNC_SETTINGS_KEY = "y5a_github_sync_settings_v1";
   const GITHUB_SYNC_ENABLED_KEY = "y5a_github_sync_enabled_v1";
   const GITHUB_SYNC_DEFAULT_TOKEN = "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";
   let activeUsername = null;
@@ -22,11 +21,7 @@
   function profileGet(key){ const storedKey = profileKey(key); return storedKey ? localStorage.getItem(storedKey) : null; }
   function profileSet(key, value){ const storedKey = profileKey(key); if (storedKey) localStorage.setItem(storedKey, value); }
   function profileRemove(key){ const storedKey = profileKey(key); if (storedKey) localStorage.removeItem(storedKey); }
-  function githubSyncSettings(){
-    try{
-      return {...{token:GITHUB_SYNC_DEFAULT_TOKEN, repository:"andythompsonn/classtools", branch:"main"}, ...JSON.parse(localStorage.getItem(GITHUB_SYNC_SETTINGS_KEY) || "{}")};
-    }catch(_){ return {token:GITHUB_SYNC_DEFAULT_TOKEN, repository:"andythompsonn/classtools", branch:"main"}; }
-  }
+  function githubSyncSettings(){ return {token:GITHUB_SYNC_DEFAULT_TOKEN, repository:"andythompsonn/classtools", branch:"main"}; }
   function githubSyncEnabledForProfile(){ return activeUsername && profileGet(GITHUB_SYNC_ENABLED_KEY) !== "false"; }
   function githubSyncPath(){ return `data/users/${encodeURIComponent(activeUsername)}.json`; }
   function setGithubSyncStatus(status, message){
@@ -36,13 +31,8 @@
     githubSyncStatusText.textContent = message;
   }
   function updateGithubSyncUI(){
-    const settings = githubSyncSettings();
     githubSyncEnabled.checked = !!githubSyncEnabledForProfile();
-    githubSyncToken.value = settings.token || "";
-    githubSyncRepository.value = settings.repository;
-    githubSyncBranch.value = settings.branch;
     const enabled = githubSyncEnabledForProfile();
-    syncGithubNowBtn.disabled = !enabled || !settings.token;
     if (!enabled) setGithubSyncStatus("", "GitHub sync is off — local JSON saving is in use.");
   }
   function githubHeaders(){
@@ -320,11 +310,6 @@
   const saveJsonNowBtn = document.getElementById("saveJsonNowBtn");
   const disconnectJsonFileBtn = document.getElementById("disconnectJsonFileBtn");
   const githubSyncEnabled = document.getElementById("githubSyncEnabled");
-  const githubSyncToken = document.getElementById("githubSyncToken");
-  const githubSyncRepository = document.getElementById("githubSyncRepository");
-  const githubSyncBranch = document.getElementById("githubSyncBranch");
-  const saveGithubSyncSettingsBtn = document.getElementById("saveGithubSyncSettingsBtn");
-  const syncGithubNowBtn = document.getElementById("syncGithubNowBtn");
   const githubSyncStatus = document.getElementById("githubSyncStatus");
   const githubSyncStatusText = document.getElementById("githubSyncStatusText");
   const jsonSaveStatus = document.getElementById("jsonSaveStatus");
@@ -7077,15 +7062,7 @@
   });
 
   disconnectJsonFileBtn.addEventListener("click", disconnectJsonSaveFile);
-  saveGithubSyncSettingsBtn.addEventListener("click", async () => {
-    const repository = githubSyncRepository.value.trim();
-    const branch = githubSyncBranch.value.trim() || "main";
-    const token = githubSyncToken.value.trim();
-    if (githubSyncEnabled.checked && (!token || !repository.includes("/"))){
-      setGithubSyncStatus("error", "Enter a GitHub token and repository as owner/repository.");
-      return;
-    }
-    localStorage.setItem(GITHUB_SYNC_SETTINGS_KEY, JSON.stringify({token, repository, branch}));
+  githubSyncEnabled.addEventListener("change", async () => {
     profileSet(GITHUB_SYNC_ENABLED_KEY, String(githubSyncEnabled.checked));
     githubSyncReady = true;
     updateGithubSyncUI();
@@ -7093,10 +7070,6 @@
       const loaded = await loadGithubSyncFile();
       if (!loaded) await saveGithubSyncFile();
     }
-  });
-  syncGithubNowBtn.addEventListener("click", async () => {
-    const loaded = await loadGithubSyncFile();
-    if (!loaded) await saveGithubSyncFile();
   });
 
   document.getElementById("editStudentsBtn").addEventListener("click", adminGuard(() => navigateTo("students")));

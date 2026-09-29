@@ -382,12 +382,6 @@
         <div class="admin-section-title">GitHub JSON Sync</div>
         <p class="admin-panel-note">Save one JSON file per signed-in user in this GitHub repository. The server copy is loaded first when the user opens the site.</p>
         <label class="github-sync-toggle"><input id="githubSyncEnabled" type="checkbox"> Use GitHub server JSON for this profile</label>
-        <div class="github-sync-fields">
-          <label>GitHub token <input id="githubSyncToken" type="password" autocomplete="off" placeholder="Fine-grained token with Contents read/write"></label>
-          <label>Repository <input id="githubSyncRepository" type="text" value="andythompsonn/classtools" placeholder="owner/repository"></label>
-          <label>Branch <input id="githubSyncBranch" type="text" value="main"></label>
-        </div>
-        <div class="toolbar admin-toolbar"><button class="secondary" id="saveGithubSyncSettingsBtn" type="button">Save GitHub sync settings</button><button class="secondary" id="syncGithubNowBtn" type="button">Sync now</button></div>
         <div class="json-save-status" id="githubSyncStatus"><span class="json-save-dot"></span><span id="githubSyncStatusText">GitHub sync is off</span></div>
       </div>
 
