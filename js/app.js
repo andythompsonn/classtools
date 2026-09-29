@@ -24,7 +24,13 @@
   function profileRemove(key){ const storedKey = profileKey(key); if (storedKey) localStorage.removeItem(storedKey); }
   function githubSyncSettings(){ return {token:GITHUB_SYNC_DEFAULT_TOKEN, repository:"andythompsonn/classtools", branch:"main"}; }
   function githubSyncEnabledForProfile(){ return activeUsername && profileGet(GITHUB_SYNC_ENABLED_KEY) !== "false"; }
-  function githubSyncPath(){ return `data/users/${encodeURIComponent(activeUsername)}.json`; }
+  function userIdFor(username){
+    let hash = 2166136261;
+    for (const character of String(username).toLowerCase()) hash = Math.imul(hash ^ character.charCodeAt(0), 16777619);
+    return String((hash >>> 0) + 1000000000);
+  }
+  function githubSyncPath(){ return `data/users/${userIdFor(activeUsername)}.json`; }
+  function legacyGithubSyncPath(){ return `data/users/${encodeURIComponent(activeUsername)}.json`; }
   function setGithubSyncStatus(status, message){
     if (!githubSyncStatus || !githubSyncStatusText) return;
     githubSyncStatus.classList.remove("connected", "warning", "error");
@@ -73,10 +79,35 @@
     if (Array.isArray(bundle.wheelItems)){ wheelItems = bundle.wheelItems; saveWheelItems(); }
     if (Array.isArray(bundle.sharkWordSourceWords)){ sharkWordSourceWords = bundle.sharkWordSourceWords; profileSet(SHARK_WORD_SOURCE_KEY, JSON.stringify(sharkWordSourceWords)); }
   }
-  async function githubRequest(method, body){
+  function mergeById(localItems, remoteItems, mergeItem = local => local){
+    const merged = new Map((remoteItems || []).map(item => [item.id, item]));
+    (localItems || []).forEach(item => merged.set(item.id, mergeItem(item, merged.get(item))));
+    return [...merged.values()];
+  }
+  function mergeUnique(values){ return [...new Set((values || []).map(value => JSON.stringify(value)))].map(value => JSON.parse(value)); }
+  function mergeSyncBundles(local, remote){
+    const localState = safeState(local.data), remoteState = safeState(remote.data);
+    const state = safeState({
+      ...remoteState,
+      ...localState,
+      students:[...new Set([...remoteState.students, ...localState.students])],
+      tasks:mergeById(localState.tasks, remoteState.tasks)
+    });
+    const mergeGroups = (localGroups, remoteGroups, itemKey) => mergeById(localGroups, remoteGroups, (localGroup, remoteGroup) => ({...remoteGroup, ...localGroup, [itemKey]:mergeUnique([...(remoteGroup?.[itemKey] || []), ...(localGroup?.[itemKey] || [])])}));
+    return {
+      ...remote, ...local, data:state,
+      versionHistory:mergeById(local.versionHistory, remote.versionHistory),
+      studentGroups:mergeGroups(local.studentGroups, remote.studentGroups, "students"),
+      wordGroups:mergeGroups(local.wordGroups, remote.wordGroups, "words"),
+      wheelItems:[...new Set([...(remote.wheelItems || []), ...(local.wheelItems || [])])],
+      sharkWordSourceWords:[...new Set([...(remote.sharkWordSourceWords || []), ...(local.sharkWordSourceWords || [])])],
+      savedAt:new Date().toISOString()
+    };
+  }
+  async function githubRequest(method, body, path = githubSyncPath()){
     const {repository, branch} = githubSyncSettings();
     if (!repository || !repository.includes("/")) throw new Error("Enter a GitHub repository as owner/repository.");
-    const url = `https://api.github.com/repos/${repository}/contents/${githubSyncPath()}?ref=${encodeURIComponent(branch || "main")}`;
+    const url = `https://api.github.com/repos/${repository}/contents/${path}?ref=${encodeURIComponent(branch || "main")}`;
     const response = await fetch(url, {method, headers:githubHeaders(), ...(body ? {body:JSON.stringify(body)} : {})});
     if (response.status === 404) return null;
     if (!response.ok) throw new Error(`GitHub returned ${response.status}.`);
@@ -88,7 +119,8 @@
     if (!settings.token){ setGithubSyncStatus("warning", "GitHub sync is unavailable."); return null; }
     setGithubSyncStatus("warning", "Loading your GitHub JSON file…");
     try{
-      const remote = await githubRequest("GET");
+      let remote = await githubRequest("GET");
+      if (!remote) remote = await githubRequest("GET", null, legacyGithubSyncPath());
       if (!remote){ setGithubSyncStatus("connected", "No server file yet — your next save will create it."); return null; }
       const decoded = new TextDecoder().decode(Uint8Array.from(atob(remote.content.replace(/\n/g, "")), char => char.charCodeAt(0)));
       const bundle = JSON.parse(decoded);
@@ -101,10 +133,15 @@
     if (remoteBundle){
       const localBundle = {...githubSyncBundle(), savedAt:profileGet(GITHUB_LOCAL_SAVED_AT_KEY)};
       const hasConflict = hasLocalProfileSave() && syncBundleFingerprint(localBundle) !== syncBundleFingerprint(remoteBundle);
-      const useLocal = hasConflict && await chooseSyncConflict(localBundle, remoteBundle);
-      if (useLocal){
+      const choice = hasConflict ? await chooseSyncConflict(localBundle, remoteBundle) : "server";
+      if (choice === "local"){
         await saveGithubSyncFile();
         setGithubSyncStatus("connected", "Using this browser's data and updated the server save.");
+      }else if (choice === "merge"){
+        applyGithubSyncBundle(mergeSyncBundles(localBundle, remoteBundle));
+        markLocalSyncSave();
+        await saveGithubSyncFile();
+        setGithubSyncStatus("connected", "Merged both versions and updated the server save.");
       }else{
         applyGithubSyncBundle(remoteBundle);
         profileSet(GITHUB_LOCAL_SAVED_AT_KEY, remoteBundle.savedAt || new Date().toISOString());
@@ -419,6 +456,7 @@
   const syncConflictDialog = document.getElementById("syncConflictDialog");
   const useLocalSaveBtn = document.getElementById("useLocalSaveBtn");
   const useServerSaveBtn = document.getElementById("useServerSaveBtn");
+  const mergeSavesBtn = document.getElementById("mergeSavesBtn");
   const localSaveTimestamp = document.getElementById("localSaveTimestamp");
   const serverSaveTimestamp = document.getElementById("serverSaveTimestamp");
   const loginForm = document.getElementById("loginForm");
@@ -431,6 +469,7 @@
   const profileSyncMode = document.getElementById("profileSyncMode");
   const profileMenu = document.getElementById("profileMenu");
   const profileNameLabel = document.getElementById("profileNameLabel");
+  const profileUserId = document.getElementById("profileUserId");
   const avatarPicker = document.getElementById("avatarPicker");
   const profileAddStudentsBtn = document.getElementById("profileAddStudentsBtn");
   const profileManageWordsBtn = document.getElementById("profileManageWordsBtn");
@@ -446,16 +485,19 @@
     localSaveTimestamp.textContent = formatSyncTimestamp(localBundle.savedAt);
     serverSaveTimestamp.textContent = formatSyncTimestamp(remoteBundle.savedAt);
     return new Promise(resolve => {
-      const choose = useLocal => {
+      const choose = choice => {
         syncConflictDialog.close();
         useLocalSaveBtn.removeEventListener("click", chooseLocal);
         useServerSaveBtn.removeEventListener("click", chooseServer);
-        resolve(useLocal);
+        mergeSavesBtn.removeEventListener("click", chooseMerge);
+        resolve(choice);
       };
-      const chooseLocal = () => choose(true);
-      const chooseServer = () => choose(false);
+      const chooseLocal = () => choose("local");
+      const chooseServer = () => choose("server");
+      const chooseMerge = () => choose("merge");
       useLocalSaveBtn.addEventListener("click", chooseLocal);
       useServerSaveBtn.addEventListener("click", chooseServer);
+      mergeSavesBtn.addEventListener("click", chooseMerge);
       syncConflictDialog.showModal();
     });
   }
@@ -500,6 +542,11 @@
   }
   async function activateProfile(username){
     activeUsername = username;
+    const allAccounts = accounts();
+    if (allAccounts[username] && !allAccounts[username].id){
+      allAccounts[username].id = userIdFor(username);
+      saveAccounts(allAccounts);
+    }
     // Preserve the original single-user project data for Andy on first login.
     if (username === "andy"){
       [STORAGE_KEY, HISTORY_STORAGE_KEY, PASSWORD_STORAGE_KEY, LANGUAGE_STORAGE_KEY,
@@ -522,6 +569,7 @@
     tableUnlockPassword = profileGet(PASSWORD_STORAGE_KEY) || "journal123";
     localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify({id:uid(), username, createdAt:new Date().toISOString()}));
     profileNameLabel.textContent = username;
+    profileUserId.textContent = `ID: ${userIdFor(username)}`;
     applyAnimalAvatar(username);
     siteControls.hidden = false; loginLauncher.hidden = true; profileMenu.hidden = true;
     document.body.classList.remove("logged-out");
@@ -555,6 +603,12 @@
     all[username] = {password, avatar:Math.floor(Math.random() * 30)}; saveAccounts(all); activateProfile(username);
   });
   profileAvatarBtn.addEventListener("click", () => { profileMenu.hidden = !profileMenu.hidden; });
+  profileUserId.addEventListener("click", async () => {
+    const id = userIdFor(activeUsername);
+    try { await navigator.clipboard.writeText(id); profileUserId.textContent = "ID copied"; }
+    catch (_) { profileUserId.textContent = `ID: ${id}`; }
+    setTimeout(() => { if (activeUsername) profileUserId.textContent = `ID: ${userIdFor(activeUsername)}`; }, 1200);
+  });
   profileSyncMode.addEventListener("change", async () => {
     const useServer = profileSyncMode.value === "server";
     profileSet(GITHUB_SYNC_ENABLED_KEY, String(useServer));

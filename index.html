@@ -14,6 +14,7 @@
     <button class="profile-avatar" id="profileAvatarBtn" type="button" aria-label="Profile">?</button>
     <div class="profile-menu" id="profileMenu" hidden>
       <strong id="profileNameLabel"></strong>
+      <button class="profile-user-id" id="profileUserId" type="button" title="Copy your user ID"></button>
       <label class="profile-sync-choice">Save location
         <select id="profileSyncMode" aria-label="Save location">
           <option value="server">Server JSON</option>
@@ -51,6 +52,9 @@
       </button>
       <button class="sync-conflict-option" id="useServerSaveBtn" type="button">
         <strong>Server save</strong><span id="serverSaveTimestamp"></span>
+      </button>
+      <button class="sync-conflict-option sync-conflict-merge" id="mergeSavesBtn" type="button">
+        <strong>Merge both saves</strong><span>Keep items from this browser and the server.</span>
       </button>
     </div>
   </div>
