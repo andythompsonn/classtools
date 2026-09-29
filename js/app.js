@@ -403,6 +403,7 @@
   const loginError = document.getElementById("loginError");
   const createAccountBtn = document.getElementById("createAccountBtn");
   const profileAvatarBtn = document.getElementById("profileAvatarBtn");
+  const loginLauncher = document.getElementById("loginLauncher");
   const profileSyncMode = document.getElementById("profileSyncMode");
   const profileMenu = document.getElementById("profileMenu");
   const profileNameLabel = document.getElementById("profileNameLabel");
@@ -479,7 +480,8 @@
     localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify({id:uid(), username, createdAt:new Date().toISOString()}));
     profileNameLabel.textContent = username;
     applyAnimalAvatar(username);
-    siteControls.hidden = false; profileMenu.hidden = true;
+    siteControls.hidden = false; loginLauncher.hidden = true; profileMenu.hidden = true;
+    document.body.classList.remove("logged-out");
     if (loginDialog.open) loginDialog.close();
     githubSyncReady = false;
     updateGithubSyncUI();
@@ -490,7 +492,14 @@
     else updateJsonSaveUI("idle", "GitHub server JSON is active.");
     saveState();
   }
-  function showLogin(){ siteControls.hidden = true; profileMenu.hidden = true; loginError.textContent = ""; loginPassword.value = ""; loginDialog.showModal(); loginUsername.focus(); }
+  function showLogin(){
+    siteControls.hidden = true; loginLauncher.hidden = false; profileMenu.hidden = true;
+    document.body.classList.add("logged-out");
+    loginError.textContent = ""; loginPassword.value = "";
+    if (!loginDialog.open) loginDialog.showModal();
+    loginUsername.focus();
+  }
+  loginLauncher.addEventListener("click", showLogin);
   loginForm.addEventListener("submit", event => {
     event.preventDefault(); const username = loginUsername.value.trim().toLowerCase(); const record = accounts()[username];
     if (!record || record.password !== loginPassword.value){ loginError.textContent = "Incorrect username or password."; return; }
