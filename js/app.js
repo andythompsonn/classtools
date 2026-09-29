@@ -72,18 +72,33 @@
     return response.json();
   }
   async function loadGithubSyncFile(){
-    if (!githubSyncEnabledForProfile()) return false;
+    if (!githubSyncEnabledForProfile()) return null;
     const settings = githubSyncSettings();
-    if (!settings.token){ setGithubSyncStatus("warning", "Add a GitHub token to use server sync."); return false; }
+    if (!settings.token){ setGithubSyncStatus("warning", "GitHub sync is unavailable."); return null; }
     setGithubSyncStatus("warning", "Loading your GitHub JSON file…");
     try{
       const remote = await githubRequest("GET");
-      if (!remote){ setGithubSyncStatus("connected", "No server file yet — your next save will create it."); return false; }
+      if (!remote){ setGithubSyncStatus("connected", "No server file yet — your next save will create it."); return null; }
       const decoded = new TextDecoder().decode(Uint8Array.from(atob(remote.content.replace(/\n/g, "")), char => char.charCodeAt(0)));
-      applyGithubSyncBundle(JSON.parse(decoded));
-      setGithubSyncStatus("connected", `Loaded ${githubSyncPath()} from GitHub.`);
+      const bundle = JSON.parse(decoded);
+      setGithubSyncStatus("connected", `Found ${githubSyncPath()} on GitHub.`);
+      return bundle;
+    }catch(error){ console.warn("Could not load GitHub JSON:", error); setGithubSyncStatus("error", `Could not load server JSON: ${error.message}`); return null; }
+  }
+  function chooseGithubData(bundle){
+    if (!bundle) return false;
+    const useServerData = confirm(
+      "Saved data was found on GitHub for this username.\n\n" +
+      "Press OK to use the server data.\n" +
+      "Press Cancel to keep this device's local data."
+    );
+    if (useServerData){
+      applyGithubSyncBundle(bundle);
+      setGithubSyncStatus("connected", "Using the GitHub server data.");
       return true;
-    }catch(error){ console.warn("Could not load GitHub JSON:", error); setGithubSyncStatus("error", `Could not load server JSON: ${error.message}`); return false; }
+    }
+    setGithubSyncStatus("warning", "Using local data. Your next save will replace the GitHub copy.");
+    return false;
   }
   async function saveGithubSyncFile(){
     if (!githubSyncReady || !githubSyncEnabledForProfile() || githubSaveInProgress) return false;
@@ -473,7 +488,7 @@
     if (loginDialog.open) loginDialog.close();
     githubSyncReady = false;
     updateGithubSyncUI();
-    await loadGithubSyncFile();
+    chooseGithubData(await loadGithubSyncFile());
     githubSyncReady = true;
     render(); renderSpinWheel(); applyRoute(); applyTranslations(document);
     if (!githubSyncEnabledForProfile()) restoreJsonSaveConnection();
@@ -7067,8 +7082,9 @@
     githubSyncReady = true;
     updateGithubSyncUI();
     if (githubSyncEnabled.checked){
-      const loaded = await loadGithubSyncFile();
-      if (!loaded) await saveGithubSyncFile();
+      const remoteBundle = await loadGithubSyncFile();
+      if (remoteBundle) chooseGithubData(remoteBundle);
+      else await saveGithubSyncFile();
     }
   });
 
