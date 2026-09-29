@@ -543,7 +543,9 @@
   async function activateProfile(username){
     activeUsername = username;
     const allAccounts = accounts();
-    if (allAccounts[username] && !allAccounts[username].id){
+    // The username is the identity shared by every browser.  Always repair
+    // older browser-only account records to the same deterministic ID.
+    if (allAccounts[username] && allAccounts[username].id !== userIdFor(username)){
       allAccounts[username].id = userIdFor(username);
       saveAccounts(allAccounts);
     }
