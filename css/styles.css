@@ -667,6 +667,20 @@ body.update-log-open .project-shell{
   .login-dialog{ width:min(390px,calc(100vw - 28px)); }
   .login-dialog label{ display:grid; gap:6px; margin:12px 0; font-weight:700; }
   .login-dialog input{ border:1px solid var(--line); border-radius:9px; padding:10px; }
+  .login-dialog .dialog-body{padding:28px}
+  .login-dialog h2{margin:0 0 8px;font-size:24px;line-height:1.2}
+  .login-dialog .dialog-actions{margin-top:22px}
+  @media (max-width:600px){
+    .login-dialog{width:calc(100vw - 24px);max-width:420px;max-height:calc(100dvh - 24px);margin:auto;border-radius:20px}
+    .login-dialog form{max-height:calc(100dvh - 24px);overflow:auto}
+    .login-dialog .dialog-body{padding:24px 20px 20px}
+    .login-dialog h2{font-size:22px}
+    .login-dialog label{gap:7px;margin:16px 0;font-size:15px}
+    .login-dialog input{min-height:48px;padding:12px;font-size:16px}
+    .login-dialog .dialog-actions,.login-dialog .dialog-actions>div{display:grid;grid-template-columns:1fr;gap:10px;width:100%}
+    .login-dialog .dialog-actions>span{display:none}
+    .login-dialog button{min-height:48px;width:100%;font-size:16px}
+  }
   #profilePasswordDialog label{ display:grid; gap:6px; margin:10px 0; font-weight:700; }
   #profilePasswordDialog input{ border:1px solid var(--line); border-radius:9px; padding:10px; }
   .dialog-close{ float:right; width:30px; height:30px; padding:0; border-radius:50%; background:#eef2f7; font-size:22px; line-height:1; }
