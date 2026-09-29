@@ -14,6 +14,7 @@
   const SHARK_WORD_SOURCE_KEY = "y5a_shark_word_source_v1";
   const JSON_SETUP_DISMISSED_KEY = "y5a_json_setup_dismissed_v1";
   const GITHUB_SYNC_ENABLED_KEY = "y5a_github_sync_enabled_v1";
+  const GITHUB_LOCAL_SAVED_AT_KEY = "y5a_github_local_saved_at_v1";
   const GITHUB_SYNC_DEFAULT_TOKEN = "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";
   let activeUsername = null;
 
@@ -56,6 +57,15 @@
       savedAt:new Date().toISOString()
     };
   }
+  function syncBundleFingerprint(bundle){
+    return JSON.stringify({data:bundle?.data, versionHistory:bundle?.versionHistory, studentGroups:bundle?.studentGroups, wordGroups:bundle?.wordGroups, wheelItems:bundle?.wheelItems, sharkWordSourceWords:bundle?.sharkWordSourceWords});
+  }
+  function formatSyncTimestamp(value){
+    const date = value ? new Date(value) : null;
+    return date && !Number.isNaN(date.getTime()) ? `Saved ${date.toLocaleString()}` : "Save date unavailable";
+  }
+  function hasLocalProfileSave(){ return profileGet(STORAGE_KEY) !== null; }
+  function markLocalSyncSave(){ profileSet(GITHUB_LOCAL_SAVED_AT_KEY, new Date().toISOString()); }
   function applyGithubSyncBundle(bundle){
     applyImportedBundle(importPortableBundle(JSON.stringify(bundle)));
     if (Array.isArray(bundle.studentGroups) && bundle.studentGroups.length){ studentGroups = bundle.studentGroups; saveStudentGroups(); }
@@ -89,8 +99,17 @@
   async function useGithubServerData(){
     const remoteBundle = await loadGithubSyncFile();
     if (remoteBundle){
-      applyGithubSyncBundle(remoteBundle);
-      setGithubSyncStatus("connected", "Using the GitHub server data.");
+      const localBundle = githubSyncBundle();
+      const hasConflict = hasLocalProfileSave() && syncBundleFingerprint(localBundle) !== syncBundleFingerprint(remoteBundle);
+      const useLocal = hasConflict && await chooseSyncConflict(localBundle, remoteBundle);
+      if (useLocal){
+        await saveGithubSyncFile();
+        setGithubSyncStatus("connected", "Using this browser's data and updated the server save.");
+      }else{
+        applyGithubSyncBundle(remoteBundle);
+        profileSet(GITHUB_LOCAL_SAVED_AT_KEY, remoteBundle.savedAt || new Date().toISOString());
+        setGithubSyncStatus("connected", "Using the GitHub server data.");
+      }
       return true;
     }
     await saveGithubSyncFile();
@@ -397,6 +416,11 @@
   siteControls.append(languageToggleBtn, adminToggleBtn);
   document.body.append(adminPanel);
   const loginDialog = document.getElementById("loginDialog");
+  const syncConflictDialog = document.getElementById("syncConflictDialog");
+  const useLocalSaveBtn = document.getElementById("useLocalSaveBtn");
+  const useServerSaveBtn = document.getElementById("useServerSaveBtn");
+  const localSaveTimestamp = document.getElementById("localSaveTimestamp");
+  const serverSaveTimestamp = document.getElementById("serverSaveTimestamp");
   const loginForm = document.getElementById("loginForm");
   const loginUsername = document.getElementById("loginUsername");
   const loginPassword = document.getElementById("loginPassword");
@@ -417,6 +441,24 @@
   const profileNewPassword = document.getElementById("profileNewPassword");
   const profileConfirmPassword = document.getElementById("profileConfirmPassword");
   const profilePasswordError = document.getElementById("profilePasswordError");
+
+  function chooseSyncConflict(localBundle, remoteBundle){
+    localSaveTimestamp.textContent = formatSyncTimestamp(profileGet(GITHUB_LOCAL_SAVED_AT_KEY) || localBundle.savedAt);
+    serverSaveTimestamp.textContent = formatSyncTimestamp(remoteBundle.savedAt);
+    return new Promise(resolve => {
+      const choose = useLocal => {
+        syncConflictDialog.close();
+        useLocalSaveBtn.removeEventListener("click", chooseLocal);
+        useServerSaveBtn.removeEventListener("click", chooseServer);
+        resolve(useLocal);
+      };
+      const chooseLocal = () => choose(true);
+      const chooseServer = () => choose(false);
+      useLocalSaveBtn.addEventListener("click", chooseLocal);
+      useServerSaveBtn.addEventListener("click", chooseServer);
+      syncConflictDialog.showModal();
+    });
+  }
   const cancelProfilePasswordBtn = document.getElementById("cancelProfilePasswordBtn");
   const logoutBtn = document.getElementById("logoutBtn");
 
@@ -559,7 +601,7 @@
   }
   let studentGroups = loadStudentGroups();
   let activeStudentGroupId = studentGroups[0].id;
-  function saveStudentGroups(){ profileSet(STUDENT_GROUPS_KEY, JSON.stringify(studentGroups)); queueGithubSyncSave(); }
+  function saveStudentGroups(){ profileSet(STUDENT_GROUPS_KEY, JSON.stringify(studentGroups)); markLocalSyncSave(); queueGithubSyncSave(); }
   function activeStudentGroup(){ return studentGroups.find(group => group.id === activeStudentGroupId) || studentGroups[0]; }
   function renderStudentGroups(){
     studentGroupSelect.innerHTML = "";
@@ -599,7 +641,7 @@
   let wordGroups = loadWordGroups();
   let activeWordGroupId = wordGroups[0].id;
   function activeWordGroup(){ return wordGroups.find(group => group.id === activeWordGroupId) || wordGroups[0]; }
-  function saveWordGroups(){ profileSet(WORD_GROUPS_KEY, JSON.stringify(wordGroups)); queueGithubSyncSave(); }
+  function saveWordGroups(){ profileSet(WORD_GROUPS_KEY, JSON.stringify(wordGroups)); markLocalSyncSave(); queueGithubSyncSave(); }
   function normalizeWordEntry(entry){
     if (typeof entry === "string") return {word:entry.trim(), definition:"", sentence:""};
     return {word:String(entry?.word || "").trim(), definition:String(entry?.definition || "").trim(), sentence:String(entry?.sentence || "").trim()};
@@ -1574,6 +1616,7 @@
       }
 
       profileSet(STORAGE_KEY, JSON.stringify(state));
+      markLocalSyncSave();
       lastSavedStateSnapshot = nextSnapshot;
       queueJsonFileSave();
       queueGithubSyncSave();

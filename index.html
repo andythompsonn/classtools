@@ -41,6 +41,20 @@
     </div>
   </form>
 </dialog>
+<dialog class="sync-conflict-dialog" id="syncConflictDialog">
+  <div class="dialog-body">
+    <h3>Two saved versions were found</h3>
+    <p>Choose the version of your classroom data you want to keep. The chosen version will replace the other one.</p>
+    <div class="sync-conflict-options">
+      <button class="sync-conflict-option" id="useLocalSaveBtn" type="button">
+        <strong>This browser</strong><span id="localSaveTimestamp"></span>
+      </button>
+      <button class="sync-conflict-option" id="useServerSaveBtn" type="button">
+        <strong>Server save</strong><span id="serverSaveTimestamp"></span>
+      </button>
+    </div>
+  </div>
+</dialog>
 <dialog id="profilePasswordDialog">
   <form class="dialog-body" id="profilePasswordForm">
     <h3>Change login password</h3>

@@ -4223,6 +4223,14 @@ body.update-log-open .project-shell{
   .github-sync-fields label{display:grid;gap:5px;font-size:12px;font-weight:750;color:var(--muted)}
   .github-sync-fields input{width:100%;padding:9px;border:1px solid var(--line);border-radius:9px}
   @media(max-width:720px){.github-sync-fields{grid-template-columns:1fr}}
+  .sync-conflict-dialog{max-width:520px;border:0;border-radius:18px;padding:0;box-shadow:0 24px 70px rgba(15,23,42,.3)}
+  .sync-conflict-dialog::backdrop{background:rgba(15,23,42,.56)}
+  .sync-conflict-options{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:18px}
+  .sync-conflict-option{min-height:110px;padding:16px;border:2px solid #bfdbfe;border-radius:14px;background:#f8fbff;color:#0f172a;text-align:left;cursor:pointer;font:inherit}
+  .sync-conflict-option:hover,.sync-conflict-option:focus-visible{border-color:#2563eb;background:#eff6ff;outline:none}
+  .sync-conflict-option strong,.sync-conflict-option span{display:block}
+  .sync-conflict-option strong{font-size:16px}.sync-conflict-option span{margin-top:7px;color:#475569;font-size:13px;line-height:1.35}
+  @media(max-width:480px){.sync-conflict-options{grid-template-columns:1fr}.sync-conflict-option{min-height:78px}}
 
   .password-field-label{
     display:flex;
