@@ -17,6 +17,8 @@
   const GITHUB_LOCAL_SAVED_AT_KEY = "y5a_github_local_saved_at_v1";
   const GITHUB_SYNC_DEFAULT_TOKEN = "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";
   let activeUsername = null;
+  let activeAccountId = null;
+  const serverAccounts = createGithubAccounts(githubRequest, base64Encode);
 
   function profileKey(key){ return activeUsername ? `${PROFILE_PREFIX}${activeUsername}__${key}` : null; }
   function profileGet(key){ const storedKey = profileKey(key); return storedKey ? localStorage.getItem(storedKey) : null; }
@@ -29,7 +31,10 @@
     for (const character of String(username).toLowerCase()) hash = Math.imul(hash ^ character.charCodeAt(0), 16777619);
     return String((hash >>> 0) + 1000000000);
   }
-  function githubSyncPath(){ return `data/users/${userIdFor(activeUsername)}.json`; }
+  function githubSyncPath(){
+    if (!activeAccountId) throw new Error('Please log in to access your server save.');
+    return `data/users/${activeAccountId}.json`;
+  }
   function legacyGithubSyncPath(){ return `data/users/${encodeURIComponent(activeUsername)}.json`; }
   function setGithubSyncStatus(status, message){
     if (!githubSyncStatus || !githubSyncStatusText) return;
@@ -56,6 +61,8 @@
   function githubSyncBundle(){
     return {
       ...portableBackupObject(),
+      userId:activeAccountId,
+      username:activeUsername,
       studentGroups,
       wordGroups,
       wheelItems,
@@ -108,9 +115,9 @@
     const {repository, branch} = githubSyncSettings();
     if (!repository || !repository.includes("/")) throw new Error("Enter a GitHub repository as owner/repository.");
     const url = `https://api.github.com/repos/${repository}/contents/${path}?ref=${encodeURIComponent(branch || "main")}`;
-    const response = await fetch(url, {method, headers:githubHeaders(), ...(body ? {body:JSON.stringify(body)} : {})});
-    if (response.status === 404) return null;
-    if (!response.ok) throw new Error(`GitHub returned ${response.status}.`);
+    const response = await fetch(url, {method, cache:'no-store', headers:githubHeaders(), ...(body ? {body:JSON.stringify({...body, branch:branch || 'main'})} : {})});
+    if (response.status === 404 && method === 'GET') return null;
+    if (!response.ok){ const error = new Error(`Could not access GitHub (${response.status}). Please check the connection and try again.`); error.status = response.status; throw error; }
     return response.json();
   }
   async function loadGithubSyncFile(){
@@ -126,7 +133,7 @@
       const bundle = JSON.parse(decoded);
       setGithubSyncStatus("connected", `Found ${githubSyncPath()} on GitHub.`);
       return bundle;
-    }catch(error){ console.warn("Could not load GitHub JSON:", error); setGithubSyncStatus("error", `Could not load server JSON: ${error.message}`); return null; }
+    }catch(error){ setGithubSyncStatus("error", `Could not load server JSON: ${error.message}`); throw error; }
   }
   async function useGithubServerData(){
     const remoteBundle = await loadGithubSyncFile();
@@ -506,8 +513,8 @@
   const logoutBtn = document.getElementById("logoutBtn");
 
   function accounts(){
-    try { return JSON.parse(localStorage.getItem(ACCOUNTS_STORAGE_KEY)) || {andy:{password:"password"}}; }
-    catch (_) { return {andy:{password:"password"}}; }
+    try { return JSON.parse(localStorage.getItem(ACCOUNTS_STORAGE_KEY)) || {}; }
+    catch (_) { return {}; }
   }
   function saveAccounts(value){ localStorage.setItem(ACCOUNTS_STORAGE_KEY, JSON.stringify(value)); }
   function setAnimalAvatar(username, avatar){
@@ -540,15 +547,12 @@
       avatarPicker.append(button);
     }
   }
-  async function activateProfile(username){
+  async function activateProfile(username, accountId){
     activeUsername = username;
+    activeAccountId = accountId;
     const allAccounts = accounts();
-    // The username is the identity shared by every browser.  Always repair
-    // older browser-only account records to the same deterministic ID.
-    if (allAccounts[username] && allAccounts[username].id !== userIdFor(username)){
-      allAccounts[username].id = userIdFor(username);
-      saveAccounts(allAccounts);
-    }
+    allAccounts[username] = {id:accountId, avatar:allAccounts[username]?.avatar};
+    saveAccounts(allAccounts);
     // Preserve the original single-user project data for Andy on first login.
     if (username === "andy"){
       [STORAGE_KEY, HISTORY_STORAGE_KEY, PASSWORD_STORAGE_KEY, LANGUAGE_STORAGE_KEY,
@@ -569,9 +573,9 @@
     syncStudentsFromActiveGroup();
     lastSavedStateSnapshot = cloneChecklistState(state);
     tableUnlockPassword = profileGet(PASSWORD_STORAGE_KEY) || "journal123";
-    localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify({id:uid(), username, createdAt:new Date().toISOString()}));
+    localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify({id:accountId, username, createdAt:new Date().toISOString()}));
     profileNameLabel.textContent = username;
-    profileUserId.textContent = `ID: ${userIdFor(username)}`;
+    profileUserId.textContent = `ID: ${accountId}`;
     applyAnimalAvatar(username);
     siteControls.hidden = false; loginLauncher.hidden = true; profileMenu.hidden = true;
     document.body.classList.remove("logged-out");
@@ -593,23 +597,33 @@
     loginUsername.focus();
   }
   loginLauncher.addEventListener("click", showLogin);
-  loginForm.addEventListener("submit", event => {
-    event.preventDefault(); const username = loginUsername.value.trim().toLowerCase(); const record = accounts()[username];
-    if (!record || record.password !== loginPassword.value){ loginError.textContent = "Incorrect username or password."; return; }
-    activateProfile(username);
-  });
-  createAccountBtn.addEventListener("click", () => {
+  let loginBusy = false;
+  async function submitServerLogin(create){
+    if (loginBusy) return;
+    loginBusy = true;
     const username = loginUsername.value.trim().toLowerCase(), password = loginPassword.value;
-    if (!/^[a-z0-9_-]{3,20}$/.test(username) || password.length < 4){ loginError.textContent = "Use 3–20 letters, numbers, _ or -, and a password of at least 4 characters."; return; }
-    const all = accounts(); if (all[username]) { loginError.textContent = "That username already exists."; return; }
-    all[username] = {password, avatar:Math.floor(Math.random() * 30)}; saveAccounts(all); activateProfile(username);
-  });
+    const buttons = loginForm.querySelectorAll('button');
+    buttons.forEach(button => button.disabled = true);
+    loginError.textContent = create ? 'Registering your account…' : 'Checking your account…';
+    try{
+      const account = create ? await serverAccounts.register(username, password, userIdFor(username)) : await serverAccounts.login(username, password);
+      await activateProfile(account.username, account.id);
+      loginPassword.value = '';
+    }catch(error){
+      githubSyncReady = false; clearTimeout(githubSaveTimer);
+      activeUsername = null; activeAccountId = null;
+      localStorage.removeItem(SESSION_STORAGE_KEY);
+      showLogin(); loginError.textContent = error.message;
+    }finally{ loginBusy = false; buttons.forEach(button => button.disabled = false); }
+  }
+  loginForm.addEventListener('submit', event => { event.preventDefault(); submitServerLogin(false); });
+  createAccountBtn.addEventListener('click', () => submitServerLogin(true));
   profileAvatarBtn.addEventListener("click", () => { profileMenu.hidden = !profileMenu.hidden; });
   profileUserId.addEventListener("click", async () => {
-    const id = userIdFor(activeUsername);
+    const id = activeAccountId;
     try { await navigator.clipboard.writeText(id); profileUserId.textContent = "ID copied"; }
     catch (_) { profileUserId.textContent = `ID: ${id}`; }
-    setTimeout(() => { if (activeUsername) profileUserId.textContent = `ID: ${userIdFor(activeUsername)}`; }, 1200);
+    setTimeout(() => { if (activeUsername) profileUserId.textContent = `ID: ${activeAccountId}`; }, 1200);
   });
   profileSyncMode.addEventListener("change", async () => {
     const useServer = profileSyncMode.value === "server";
@@ -635,14 +649,17 @@
     profileMenu.hidden = true; profilePasswordForm.reset(); profilePasswordError.textContent = ""; profilePasswordDialog.showModal();
   });
   cancelProfilePasswordBtn.addEventListener("click", () => profilePasswordDialog.close());
-  profilePasswordForm.addEventListener("submit", event => {
-    event.preventDefault(); const all = accounts(); const account = all[activeUsername];
-    if (!account || account.password !== profileCurrentPassword.value){ profilePasswordError.textContent = "Current password is incorrect."; return; }
+  profilePasswordForm.addEventListener("submit", async event => {
+    event.preventDefault();
     if (profileNewPassword.value !== profileConfirmPassword.value){ profilePasswordError.textContent = "New passwords do not match."; return; }
     if (profileNewPassword.value.length < 4){ profilePasswordError.textContent = "Use at least 4 characters."; return; }
-    account.password = profileNewPassword.value; saveAccounts(all); profilePasswordDialog.close();
+    const button = profilePasswordForm.querySelector('button[type="submit"]');
+    button.disabled = true;
+    try { await serverAccounts.changePassword(activeUsername, profileCurrentPassword.value, profileNewPassword.value); profilePasswordDialog.close(); }
+    catch(error){ profilePasswordError.textContent = error.message; }
+    finally { button.disabled = false; }
   });
-  logoutBtn.addEventListener("click", () => { localStorage.removeItem(SESSION_STORAGE_KEY); activeUsername = null; showLogin(); });
+  logoutBtn.addEventListener("click", () => { clearTimeout(githubSaveTimer); githubSyncReady = false; localStorage.removeItem(SESSION_STORAGE_KEY); activeUsername = null; activeAccountId = null; showLogin(); });
 
   function uid(){
     return (crypto.randomUUID ? crypto.randomUUID() :
@@ -9327,12 +9344,7 @@
   ).join("|");
   saveState();
 
-  try{
-    const savedSession = JSON.parse(localStorage.getItem(SESSION_STORAGE_KEY) || "null");
-    const account = savedSession && accounts()[savedSession.username];
-    if (account) activateProfile(savedSession.username);
-    else showLogin();
-  }catch(_){
-    showLogin();
-  }
+  // Browser-only sessions cannot authenticate a shared account.
+  localStorage.removeItem(SESSION_STORAGE_KEY);
+  showLogin();
 })();
