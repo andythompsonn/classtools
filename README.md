@@ -3,3 +3,7 @@
 Open `index.html` to use the full app. Game entry files are grouped in `games/`: `games/index.html`, `games/wordle.html`, `games/sentence-guess.html`, and `games/spin-wheel.html`. They provide stable URLs and redirect into the matching section.
 
 Shared styles are in `css/styles.css` and all current application logic is in `js/app.js`. This preserves the original local-storage data keys and browser JSON-save support.
+
+## GitHub JSON sync
+
+Open **Settings → GitHub JSON Sync**, enable it for the signed-in profile, and enter a GitHub fine-grained personal access token with **Contents: Read and write** access to `andythompsonn/classtools`. Each profile is saved as `data/users/<username>.json` on the selected branch. Disable the switch to use the existing local JSON-file option instead.

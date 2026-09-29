@@ -13,12 +13,106 @@
   const WORD_GROUPS_KEY = "y5a_word_groups_v1";
   const SHARK_WORD_SOURCE_KEY = "y5a_shark_word_source_v1";
   const JSON_SETUP_DISMISSED_KEY = "y5a_json_setup_dismissed_v1";
+  const GITHUB_SYNC_SETTINGS_KEY = "y5a_github_sync_settings_v1";
+  const GITHUB_SYNC_ENABLED_KEY = "y5a_github_sync_enabled_v1";
+  const GITHUB_SYNC_DEFAULT_TOKEN = "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";
   let activeUsername = null;
 
   function profileKey(key){ return activeUsername ? `${PROFILE_PREFIX}${activeUsername}__${key}` : null; }
   function profileGet(key){ const storedKey = profileKey(key); return storedKey ? localStorage.getItem(storedKey) : null; }
   function profileSet(key, value){ const storedKey = profileKey(key); if (storedKey) localStorage.setItem(storedKey, value); }
   function profileRemove(key){ const storedKey = profileKey(key); if (storedKey) localStorage.removeItem(storedKey); }
+  function githubSyncSettings(){
+    try{
+      return {...{token:GITHUB_SYNC_DEFAULT_TOKEN, repository:"andythompsonn/classtools", branch:"main"}, ...JSON.parse(localStorage.getItem(GITHUB_SYNC_SETTINGS_KEY) || "{}")};
+    }catch(_){ return {token:GITHUB_SYNC_DEFAULT_TOKEN, repository:"andythompsonn/classtools", branch:"main"}; }
+  }
+  function githubSyncEnabledForProfile(){ return activeUsername && profileGet(GITHUB_SYNC_ENABLED_KEY) !== "false"; }
+  function githubSyncPath(){ return `data/users/${encodeURIComponent(activeUsername)}.json`; }
+  function setGithubSyncStatus(status, message){
+    if (!githubSyncStatus || !githubSyncStatusText) return;
+    githubSyncStatus.classList.remove("connected", "warning", "error");
+    if (status) githubSyncStatus.classList.add(status);
+    githubSyncStatusText.textContent = message;
+  }
+  function updateGithubSyncUI(){
+    const settings = githubSyncSettings();
+    githubSyncEnabled.checked = !!githubSyncEnabledForProfile();
+    githubSyncToken.value = settings.token || "";
+    githubSyncRepository.value = settings.repository;
+    githubSyncBranch.value = settings.branch;
+    const enabled = githubSyncEnabledForProfile();
+    syncGithubNowBtn.disabled = !enabled || !settings.token;
+    if (!enabled) setGithubSyncStatus("", "GitHub sync is off — local JSON saving is in use.");
+  }
+  function githubHeaders(){
+    const {token} = githubSyncSettings();
+    return {"Accept":"application/vnd.github+json", "Content-Type":"application/json", ...(token ? {"Authorization":`Bearer ${token}`} : {})};
+  }
+  function base64Encode(value){
+    const bytes = new TextEncoder().encode(value);
+    let binary = "";
+    bytes.forEach(byte => { binary += String.fromCharCode(byte); });
+    return btoa(binary);
+  }
+  function githubSyncBundle(){
+    return {
+      ...portableBackupObject(),
+      studentGroups,
+      wordGroups,
+      wheelItems,
+      sharkWordSourceWords,
+      savedAt:new Date().toISOString()
+    };
+  }
+  function applyGithubSyncBundle(bundle){
+    applyImportedBundle(importPortableBundle(JSON.stringify(bundle)));
+    if (Array.isArray(bundle.studentGroups) && bundle.studentGroups.length){ studentGroups = bundle.studentGroups; saveStudentGroups(); }
+    if (Array.isArray(bundle.wordGroups) && bundle.wordGroups.length){ wordGroups = bundle.wordGroups; saveWordGroups(); }
+    if (Array.isArray(bundle.wheelItems)){ wheelItems = bundle.wheelItems; saveWheelItems(); }
+    if (Array.isArray(bundle.sharkWordSourceWords)){ sharkWordSourceWords = bundle.sharkWordSourceWords; profileSet(SHARK_WORD_SOURCE_KEY, JSON.stringify(sharkWordSourceWords)); }
+  }
+  async function githubRequest(method, body){
+    const {repository, branch} = githubSyncSettings();
+    if (!repository || !repository.includes("/")) throw new Error("Enter a GitHub repository as owner/repository.");
+    const url = `https://api.github.com/repos/${repository}/contents/${githubSyncPath()}?ref=${encodeURIComponent(branch || "main")}`;
+    const response = await fetch(url, {method, headers:githubHeaders(), ...(body ? {body:JSON.stringify(body)} : {})});
+    if (response.status === 404) return null;
+    if (!response.ok) throw new Error(`GitHub returned ${response.status}.`);
+    return response.json();
+  }
+  async function loadGithubSyncFile(){
+    if (!githubSyncEnabledForProfile()) return false;
+    const settings = githubSyncSettings();
+    if (!settings.token){ setGithubSyncStatus("warning", "Add a GitHub token to use server sync."); return false; }
+    setGithubSyncStatus("warning", "Loading your GitHub JSON file…");
+    try{
+      const remote = await githubRequest("GET");
+      if (!remote){ setGithubSyncStatus("connected", "No server file yet — your next save will create it."); return false; }
+      const decoded = new TextDecoder().decode(Uint8Array.from(atob(remote.content.replace(/\n/g, "")), char => char.charCodeAt(0)));
+      applyGithubSyncBundle(JSON.parse(decoded));
+      setGithubSyncStatus("connected", `Loaded ${githubSyncPath()} from GitHub.`);
+      return true;
+    }catch(error){ console.warn("Could not load GitHub JSON:", error); setGithubSyncStatus("error", `Could not load server JSON: ${error.message}`); return false; }
+  }
+  async function saveGithubSyncFile(){
+    if (!githubSyncReady || !githubSyncEnabledForProfile() || githubSaveInProgress) return false;
+    const settings = githubSyncSettings();
+    if (!settings.token) return false;
+    githubSaveInProgress = true;
+    try{
+      const existing = await githubRequest("GET");
+      const result = await githubRequest("PUT", {message:`Save ${activeUsername}'s classroom data`, content:base64Encode(JSON.stringify(githubSyncBundle(), null, 2)), branch:settings.branch || "main", ...(existing?.sha ? {sha:existing.sha} : {})});
+      setGithubSyncStatus("connected", `Saved to GitHub at ${new Date().toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"})}.`);
+      return !!result;
+    }catch(error){ console.warn("Could not save GitHub JSON:", error); setGithubSyncStatus("error", `Could not save server JSON: ${error.message}`); return false;
+    }finally{ githubSaveInProgress = false; }
+  }
+  function queueGithubSyncSave(){
+    if (!githubSyncReady || !githubSyncEnabledForProfile()) return;
+    clearTimeout(githubSaveTimer);
+    githubSaveTimer = setTimeout(saveGithubSyncFile, 900);
+  }
   const JSON_HANDLE_DB = "andy_student_task_file_handles";
   const JSON_HANDLE_STORE = "handles";
   const JSON_HANDLE_KEY = "live-json-save";
@@ -82,6 +176,9 @@
   let jsonSaveInProgress = false;
   let jsonSavePending = false;
   let jsonStatusMessageTimer = null;
+  let githubSyncReady = false;
+  let githubSaveTimer = null;
+  let githubSaveInProgress = false;
 
   const floatingTimerLauncher = document.getElementById("floatingTimerLauncher");
   const floatingTimerPanel = document.getElementById("floatingTimerPanel");
@@ -222,6 +319,14 @@
   const connectJsonFileBtn = document.getElementById("connectJsonFileBtn");
   const saveJsonNowBtn = document.getElementById("saveJsonNowBtn");
   const disconnectJsonFileBtn = document.getElementById("disconnectJsonFileBtn");
+  const githubSyncEnabled = document.getElementById("githubSyncEnabled");
+  const githubSyncToken = document.getElementById("githubSyncToken");
+  const githubSyncRepository = document.getElementById("githubSyncRepository");
+  const githubSyncBranch = document.getElementById("githubSyncBranch");
+  const saveGithubSyncSettingsBtn = document.getElementById("saveGithubSyncSettingsBtn");
+  const syncGithubNowBtn = document.getElementById("syncGithubNowBtn");
+  const githubSyncStatus = document.getElementById("githubSyncStatus");
+  const githubSyncStatusText = document.getElementById("githubSyncStatusText");
   const jsonSaveStatus = document.getElementById("jsonSaveStatus");
   const jsonSaveStatusText = document.getElementById("jsonSaveStatusText");
   const archiveSortDropdown = document.getElementById("archiveSortDropdown");
@@ -354,7 +459,7 @@
       avatarPicker.append(button);
     }
   }
-  function activateProfile(username){
+  async function activateProfile(username){
     activeUsername = username;
     // Preserve the original single-user project data for Andy on first login.
     if (username === "andy"){
@@ -381,7 +486,14 @@
     applyAnimalAvatar(username);
     siteControls.hidden = false; profileMenu.hidden = true;
     if (loginDialog.open) loginDialog.close();
-    render(); renderSpinWheel(); applyRoute(); applyTranslations(document); restoreJsonSaveConnection(); saveState();
+    githubSyncReady = false;
+    updateGithubSyncUI();
+    await loadGithubSyncFile();
+    githubSyncReady = true;
+    render(); renderSpinWheel(); applyRoute(); applyTranslations(document);
+    if (!githubSyncEnabledForProfile()) restoreJsonSaveConnection();
+    else updateJsonSaveUI("idle", "GitHub server JSON is active.");
+    saveState();
   }
   function showLogin(){ siteControls.hidden = true; profileMenu.hidden = true; loginError.textContent = ""; loginPassword.value = ""; loginDialog.showModal(); loginUsername.focus(); }
   loginForm.addEventListener("submit", event => {
@@ -432,7 +544,7 @@
   }
   let studentGroups = loadStudentGroups();
   let activeStudentGroupId = studentGroups[0].id;
-  function saveStudentGroups(){ profileSet(STUDENT_GROUPS_KEY, JSON.stringify(studentGroups)); }
+  function saveStudentGroups(){ profileSet(STUDENT_GROUPS_KEY, JSON.stringify(studentGroups)); queueGithubSyncSave(); }
   function activeStudentGroup(){ return studentGroups.find(group => group.id === activeStudentGroupId) || studentGroups[0]; }
   function renderStudentGroups(){
     studentGroupSelect.innerHTML = "";
@@ -472,7 +584,7 @@
   let wordGroups = loadWordGroups();
   let activeWordGroupId = wordGroups[0].id;
   function activeWordGroup(){ return wordGroups.find(group => group.id === activeWordGroupId) || wordGroups[0]; }
-  function saveWordGroups(){ profileSet(WORD_GROUPS_KEY, JSON.stringify(wordGroups)); }
+  function saveWordGroups(){ profileSet(WORD_GROUPS_KEY, JSON.stringify(wordGroups)); queueGithubSyncSave(); }
   function normalizeWordEntry(entry){
     if (typeof entry === "string") return {word:entry.trim(), definition:"", sentence:""};
     return {word:String(entry?.word || "").trim(), definition:String(entry?.definition || "").trim(), sentence:String(entry?.sentence || "").trim()};
@@ -1377,7 +1489,7 @@
   }
 
   function showJsonSetupPrompt(){
-    if (!activeUsername || jsonFileHandle || tableLocked || profileGet(JSON_SETUP_DISMISSED_KEY) === "seen") return;
+    if (!activeUsername || githubSyncEnabledForProfile() || jsonFileHandle || tableLocked || profileGet(JSON_SETUP_DISMISSED_KEY) === "seen") return;
     if (!("showSaveFilePicker" in window)) return;
     if (jsonSetupDialog && !jsonSetupDialog.open){
       jsonSetupDialog.showModal();
@@ -1449,6 +1561,7 @@
       profileSet(STORAGE_KEY, JSON.stringify(state));
       lastSavedStateSnapshot = nextSnapshot;
       queueJsonFileSave();
+      queueGithubSyncSave();
       if (saveStatus){
         saveStatus.innerHTML = '<span class="dot"></span><span>Saved automatically</span>';
         clearTimeout(saveTimer);
@@ -1848,6 +1961,7 @@
 
   function saveWheelItems(){
     profileSet(WHEEL_STORAGE_KEY, JSON.stringify(wheelItems));
+    queueGithubSyncSave();
   }
 
   // Shared profile roster for games and future classroom tools.
@@ -6963,6 +7077,27 @@
   });
 
   disconnectJsonFileBtn.addEventListener("click", disconnectJsonSaveFile);
+  saveGithubSyncSettingsBtn.addEventListener("click", async () => {
+    const repository = githubSyncRepository.value.trim();
+    const branch = githubSyncBranch.value.trim() || "main";
+    const token = githubSyncToken.value.trim();
+    if (githubSyncEnabled.checked && (!token || !repository.includes("/"))){
+      setGithubSyncStatus("error", "Enter a GitHub token and repository as owner/repository.");
+      return;
+    }
+    localStorage.setItem(GITHUB_SYNC_SETTINGS_KEY, JSON.stringify({token, repository, branch}));
+    profileSet(GITHUB_SYNC_ENABLED_KEY, String(githubSyncEnabled.checked));
+    githubSyncReady = true;
+    updateGithubSyncUI();
+    if (githubSyncEnabled.checked){
+      const loaded = await loadGithubSyncFile();
+      if (!loaded) await saveGithubSyncFile();
+    }
+  });
+  syncGithubNowBtn.addEventListener("click", async () => {
+    const loaded = await loadGithubSyncFile();
+    if (!loaded) await saveGithubSyncFile();
+  });
 
   document.getElementById("editStudentsBtn").addEventListener("click", adminGuard(() => navigateTo("students")));
   studentGroupSelect.addEventListener("change", () => {
@@ -8754,6 +8889,7 @@
     }
     sharkWordSourceWords = [...new Set(words)];
     profileSet(SHARK_WORD_SOURCE_KEY, JSON.stringify(sharkWordSourceWords));
+    queueGithubSyncSave();
     sharkWordAnswer = "";
     startSharkWordGame();
     setSharkWordMessage(`${sharkWordSourceWords.length} words imported from ${group.name}.`, "success");

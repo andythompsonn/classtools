@@ -4195,6 +4195,12 @@ body.update-log-open .project-shell{
     margin-top:8px;
     line-height:1.4;
   }
+  .github-sync-toggle{display:flex;align-items:center;gap:9px;margin:12px 0;font-weight:750}
+  .github-sync-toggle input{width:18px;height:18px}
+  .github-sync-fields{display:grid;grid-template-columns:2fr 1fr 110px;gap:10px;margin:14px 0}
+  .github-sync-fields label{display:grid;gap:5px;font-size:12px;font-weight:750;color:var(--muted)}
+  .github-sync-fields input{width:100%;padding:9px;border:1px solid var(--line);border-radius:9px}
+  @media(max-width:720px){.github-sync-fields{grid-template-columns:1fr}}
 
   .password-field-label{
     display:flex;
