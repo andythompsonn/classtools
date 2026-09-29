@@ -99,7 +99,7 @@
   async function useGithubServerData(){
     const remoteBundle = await loadGithubSyncFile();
     if (remoteBundle){
-      const localBundle = githubSyncBundle();
+      const localBundle = {...githubSyncBundle(), savedAt:profileGet(GITHUB_LOCAL_SAVED_AT_KEY)};
       const hasConflict = hasLocalProfileSave() && syncBundleFingerprint(localBundle) !== syncBundleFingerprint(remoteBundle);
       const useLocal = hasConflict && await chooseSyncConflict(localBundle, remoteBundle);
       if (useLocal){
@@ -443,7 +443,7 @@
   const profilePasswordError = document.getElementById("profilePasswordError");
 
   function chooseSyncConflict(localBundle, remoteBundle){
-    localSaveTimestamp.textContent = formatSyncTimestamp(profileGet(GITHUB_LOCAL_SAVED_AT_KEY) || localBundle.savedAt);
+    localSaveTimestamp.textContent = formatSyncTimestamp(localBundle.savedAt);
     serverSaveTimestamp.textContent = formatSyncTimestamp(remoteBundle.savedAt);
     return new Promise(resolve => {
       const choose = useLocal => {
@@ -459,6 +459,7 @@
       syncConflictDialog.showModal();
     });
   }
+  syncConflictDialog.addEventListener("cancel", event => event.preventDefault());
   const cancelProfilePasswordBtn = document.getElementById("cancelProfilePasswordBtn");
   const logoutBtn = document.getElementById("logoutBtn");
 
@@ -2019,6 +2020,7 @@
 
   function saveWheelItems(){
     profileSet(WHEEL_STORAGE_KEY, JSON.stringify(wheelItems));
+    markLocalSyncSave();
     queueGithubSyncSave();
   }
 
@@ -8932,6 +8934,7 @@
     }
     sharkWordSourceWords = [...new Set(words)];
     profileSet(SHARK_WORD_SOURCE_KEY, JSON.stringify(sharkWordSourceWords));
+    markLocalSyncSave();
     queueGithubSyncSave();
     sharkWordAnswer = "";
     startSharkWordGame();
