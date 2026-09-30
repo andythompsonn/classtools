@@ -596,11 +596,7 @@
     saveState();
   }
   function showLogin(){
-    siteControls.hidden = true; loginLauncher.hidden = false; profileMenu.hidden = true;
-    document.body.classList.remove("logged-out");
-    loginError.textContent = ""; loginPassword.value = "";
-    if (!loginDialog.open) loginDialog.showModal();
-    loginUsername.focus();
+    continueWithoutLogin();
   }
   function continueWithoutLogin(){
     activeUsername = "andy"; activeAccountId = null; githubSyncReady = false;
@@ -611,13 +607,12 @@
     sharkWordSourceWords = loadSharkWordSource(); syncStudentsFromActiveGroup();
     lastSavedStateSnapshot = cloneChecklistState(state);
     tableUnlockPassword = profileGet(PASSWORD_STORAGE_KEY) || "journal123";
-    siteControls.hidden = true; loginLauncher.hidden = false; profileMenu.hidden = true;
+    siteControls.hidden = true; loginLauncher.hidden = true; profileMenu.hidden = true;
     document.body.classList.remove("logged-out");
     if (loginDialog.open) loginDialog.close();
     render(); renderSpinWheel(); applyRoute(); applyTranslations(document);
     saveState();
   }
-  loginLauncher.addEventListener("click", showLogin);
   let loginBusy = false;
   async function submitServerLogin(create){
     if (loginBusy) return;
