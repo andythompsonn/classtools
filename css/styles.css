@@ -655,9 +655,6 @@ body.update-log-open .project-shell{
   }
   .login-launcher{position:fixed;z-index:8001;top:14px;right:18px;min-height:38px;padding:8px 15px;border:1px solid #cbd5e1;border-radius:999px;background:#1d4ed8;color:#fff;font:inherit;font-weight:800;cursor:pointer;box-shadow:0 8px 24px rgba(31,41,55,.12)}
   .login-launcher[hidden]{display:none}
-  body.logged-out .project-shell{filter:grayscale(.25);}
-  body.logged-out .main-app-card{opacity:.55;cursor:not-allowed;pointer-events:none}
-  body.logged-out .main-app-card:focus{outline:none}
   .site-controls[hidden]{ display:none; }
   .profile-control{ position:relative; }
   .profile-avatar{ width:36px; height:36px; padding:0; border:2px solid #bfdbfe; border-radius:50%; background:#1d4ed8; color:white; font-weight:850; }

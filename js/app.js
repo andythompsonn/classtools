@@ -16,7 +16,8 @@
   const GITHUB_SYNC_ENABLED_KEY = "y5a_github_sync_enabled_v1";
   const GITHUB_LOCAL_SAVED_AT_KEY = "y5a_github_local_saved_at_v1";
   const GITHUB_SYNC_DEFAULT_TOKEN = "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";
-  let activeUsername = null;
+  // The original local profile remains available when login is skipped.
+  let activeUsername = "andy";
   let activeAccountId = null;
   const serverAccounts = createGithubAccounts(githubRequest, base64Encode);
 
@@ -596,10 +597,25 @@
   }
   function showLogin(){
     siteControls.hidden = true; loginLauncher.hidden = false; profileMenu.hidden = true;
-    document.body.classList.add("logged-out");
+    document.body.classList.remove("logged-out");
     loginError.textContent = ""; loginPassword.value = "";
     if (!loginDialog.open) loginDialog.showModal();
     loginUsername.focus();
+  }
+  function continueWithoutLogin(){
+    activeUsername = "andy"; activeAccountId = null; githubSyncReady = false;
+    uiLanguage = profileGet(LANGUAGE_STORAGE_KEY) || (browserPrefersChinese ? "zh" : "en");
+    state = loadState(); historyEntries = loadVersionHistory(); wheelItems = loadWheelItems();
+    studentGroups = loadStudentGroups(); activeStudentGroupId = studentGroups[0].id;
+    wordGroups = loadWordGroups(); activeWordGroupId = wordGroups[0].id;
+    sharkWordSourceWords = loadSharkWordSource(); syncStudentsFromActiveGroup();
+    lastSavedStateSnapshot = cloneChecklistState(state);
+    tableUnlockPassword = profileGet(PASSWORD_STORAGE_KEY) || "journal123";
+    siteControls.hidden = true; loginLauncher.hidden = false; profileMenu.hidden = true;
+    document.body.classList.remove("logged-out");
+    if (loginDialog.open) loginDialog.close();
+    render(); renderSpinWheel(); applyRoute(); applyTranslations(document);
+    saveState();
   }
   loginLauncher.addEventListener("click", showLogin);
   let loginBusy = false;
@@ -664,7 +680,7 @@
     catch(error){ profilePasswordError.textContent = error.message; }
     finally { button.disabled = false; }
   });
-  logoutBtn.addEventListener("click", () => { clearTimeout(githubSaveTimer); githubSyncReady = false; localStorage.removeItem(SESSION_STORAGE_KEY); activeUsername = null; activeAccountId = null; showLogin(); });
+  logoutBtn.addEventListener("click", () => { clearTimeout(githubSaveTimer); localStorage.removeItem(SESSION_STORAGE_KEY); continueWithoutLogin(); });
 
   function uid(){
     return (crypto.randomUUID ? crypto.randomUUID() :
@@ -9349,7 +9365,7 @@
   ).join("|");
   saveState();
 
-  // Browser-only sessions cannot authenticate a shared account.
+  // Login is optional; visitors can use the classroom tools without an account.
   localStorage.removeItem(SESSION_STORAGE_KEY);
-  showLogin();
+  continueWithoutLogin();
 })();
