@@ -15,7 +15,7 @@
   const JSON_SETUP_DISMISSED_KEY = "y5a_json_setup_dismissed_v1";
   const GITHUB_SYNC_ENABLED_KEY = "y5a_github_sync_enabled_v1";
   const GITHUB_LOCAL_SAVED_AT_KEY = "y5a_github_local_saved_at_v1";
-  const GITHUB_SYNC_DEFAULT_TOKEN = "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";
+  const GITHUB_SYNC_DEFAULT_TOKEN = "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";
   let activeUsername = null;
   let activeAccountId = null;
   const serverAccounts = createGithubAccounts(githubRequest, base64Encode);
@@ -117,7 +117,12 @@
     const url = `https://api.github.com/repos/${repository}/contents/${path}?ref=${encodeURIComponent(branch || "main")}`;
     const response = await fetch(url, {method, cache:'no-store', headers:githubHeaders(), ...(body ? {body:JSON.stringify({...body, branch:branch || 'main'})} : {})});
     if (response.status === 404 && method === 'GET') return null;
-    if (!response.ok){ const error = new Error(`Could not access GitHub (${response.status}). Please check the connection and try again.`); error.status = response.status; throw error; }
+    if (!response.ok){
+      const message = response.status === 401
+        ? 'The website’s GitHub access token is invalid or has expired. The site owner must replace it. This is not a classroom password error.'
+        : `Could not access GitHub (${response.status}). Please check repository permissions and try again.`;
+      const error = new Error(message); error.status = response.status; throw error;
+    }
     return response.json();
   }
   async function loadGithubSyncFile(){
