@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vocabulary Tic-Tac-Toe</title>
+<style>
+:root{
+  --bg:#0b1020; --panel:#121a30; --panel2:#18223f;
+  --text:#f7f9ff; --muted:#9eabc7; --line:rgba(255,255,255,.11);
+  --blue:#4f8cff; --red:#ff617a; --purple:#756cff; --green:#48c99f;
+}
+*{box-sizing:border-box}
+html,body{
+  margin:0;
+  width:100%;
+  height:100%;
+  overflow:hidden;
+}
+body{
+  font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;
+  color:var(--text);
+  background:
+    radial-gradient(circle at 15% 20%,rgba(117,108,255,.14),transparent 28%),
+    radial-gradient(circle at 88% 80%,rgba(72,201,159,.09),transparent 30%),
+    var(--bg);
+}
+button,input,textarea{font:inherit}
+.app{
+  width:100vw;
+  height:100vh;
+  height:100dvh;
+  max-width:100vw;
+  max-height:100vh;
+  max-height:100dvh;
+  display:grid;
+  grid-template-rows:auto minmax(0,1fr);
+  gap:8px;
+  padding:8px;
+  overflow:hidden;
+}
+.card{
+  background:linear-gradient(180deg,rgba(255,255,255,.048),rgba(255,255,255,.026));
+  border:1px solid var(--line);
+  border-radius:22px;
+}
+header{
+  min-height:52px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  padding:7px 10px;
+  overflow:hidden;
+}
+.brand{display:flex;align-items:center;gap:11px;font-size:clamp(22px,2.2vw,34px);font-weight:1000}
+.logo{
+  width:44px;height:44px;border-radius:14px;display:grid;place-items:center;
+  background:linear-gradient(135deg,var(--purple),#9c73ff);
+  font-weight:1000;
+}
+.top-actions{display:flex;gap:8px;flex-wrap:wrap}
+.btn{
+  border:1px solid rgba(255,255,255,.1);
+  background:var(--panel2);color:var(--text);
+  border-radius:13px;padding:9px 12px;font-weight:900;cursor:pointer;
+}
+.btn:hover{background:#202d50}
+.btn.danger{background:linear-gradient(135deg,#ff7187,#e84d66)}
+.game{
+  min-width:0;
+  min-height:0;
+  width:100%;
+  height:100%;
+  overflow:hidden;
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 250px;
+  gap:8px;
+}
+.board-wrap{
+  min-width:0;
+  min-height:0;
+  width:100%;
+  height:100%;
+  padding:8px;
+  overflow:hidden;
+}
+.board{
+  width:100%;
+  height:100%;
+  min-width:0;
+  min-height:0;
+  overflow:hidden;
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  grid-template-rows:repeat(3,minmax(0,1fr));
+  gap:8px;
+}
+.tile{
+  position:relative;
+  min-width:0;
+  min-height:0;
+  overflow:hidden;
+  border:1px solid rgba(255,255,255,.13);
+  border-radius:16px;
+  background:linear-gradient(145deg,#19233f,#11192f);
+  color:var(--text);
+  padding:10px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  cursor:pointer;
+  transition:none;
+}
+
+.tile.definition{box-shadow:inset 0 5px 0 var(--purple)}
+.tile.word{box-shadow:inset 0 5px 0 var(--blue)}
+.tile.sentence{box-shadow:inset 0 5px 0 var(--green)}
+.tile .type{
+  position:absolute;top:10px;left:11px;
+  color:var(--muted);font-size:10px;font-weight:1000;
+  text-transform:uppercase;letter-spacing:.12em;
+}
+.tile .num{
+  position:absolute;top:9px;right:11px;
+  color:var(--muted);font-size:10px;font-weight:900;
+}
+.tile .prompt{
+  font-size:clamp(17px,1.8vw,29px);
+  line-height:1.16;font-weight:1000;
+  overflow-wrap:anywhere;
+}
+.tile.claimed{cursor:default;padding:0}
+.tile.claimed.x{background:var(--blue);box-shadow:none}
+.tile.claimed.o{background:var(--red);box-shadow:none}
+.tile.claimed:hover{background:inherit}
+.mark{
+  font-size:clamp(100px,11vw,175px);
+  font-weight:1000;line-height:1;
+}
+.side{
+  min-width:0;
+  min-height:0;
+  width:100%;
+  height:100%;
+  overflow:hidden;
+  padding:9px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  justify-content:flex-start;
+}
+.turn{
+  border:1px solid var(--line);
+  border-radius:18px;padding:14px;
+  background:rgba(255,255,255,.045);
+}
+.turn small{
+  display:block;color:var(--muted);
+  text-transform:uppercase;letter-spacing:.12em;
+  font-size:10px;font-weight:1000;
+}
+.turn strong{display:block;margin-top:4px;font-size:28px}
+.team{
+  display:grid;grid-template-columns:44px minmax(0,1fr);gap:9px;align-items:center;
+  border:1px solid var(--line);
+  border-radius:15px;padding:9px;
+  background:rgba(255,255,255,.035);
+}
+.team-symbol{
+  width:44px;height:44px;border-radius:12px;
+  display:grid;place-items:center;color:white;
+  font-size:25px;font-weight:1000;
+}
+.team-symbol.x{background:var(--blue)}
+.team-symbol.o{background:var(--red)}
+.team input{
+  width:100%;min-width:0;border:0;outline:0;background:transparent;
+  color:var(--text);font-weight:1000;font-size:16px;
+}
+.help{
+  margin-top:auto;
+  color:#cbd3e6;
+  font-size:12px;line-height:1.45;
+  border:1px solid rgba(117,108,255,.17);
+  background:rgba(117,108,255,.075);
+  border-radius:14px;padding:10px;
+}
+.modal-bg{
+  position:fixed;inset:0;display:none;align-items:center;justify-content:center;
+  background:rgba(3,6,15,.8);padding:20px;z-index:20;
+}
+.modal-bg.show{display:flex}
+.modal{
+  width:min(760px,96vw);max-height:90vh;overflow:auto;
+  background:#11182d;border:1px solid var(--line);border-radius:24px;padding:22px;
+}
+.modal h2{margin:0 0 8px}
+.modal textarea{
+  width:100%;min-height:360px;resize:vertical;
+  background:#0c1326;color:var(--text);border:1px solid var(--line);
+  border-radius:14px;padding:12px;font-size:15px;line-height:1.5;
+}
+.modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:12px;flex-wrap:wrap}
+.winner{text-align:center}
+.winner .big{font-size:clamp(42px,6vw,76px);font-weight:1000;margin:14px 0 4px}
+.winner .sub{color:var(--muted);font-weight:800}
+@media(max-width:900px){
+  html,body{overflow:hidden}
+  .app{
+    width:100vw;
+    height:100vh;
+    height:100dvh;
+    min-height:0;
+    overflow:hidden;
+  }
+  .game{
+    grid-template-columns:minmax(0,1fr) 190px;
+    height:100%;
+    overflow:hidden;
+  }
+  .board-wrap{
+    min-height:0;
+    height:100%;
+    overflow:hidden;
+  }
+  .side{
+    min-height:0;
+    overflow:hidden;
+  }
+  .brand{font-size:18px}
+  .logo{width:32px;height:32px}
+  .top-actions .btn{padding:5px 7px;font-size:10px}
+  .tile .prompt{font-size:clamp(10px,1.6vw,16px)}
+  .mark{font-size:clamp(56px,9vw,90px)}
+  .help{font-size:9px}
+}
+  .app{height:auto;min-height:100%;width:100%}
+  .game{grid-template-columns:1fr}
+  .board-wrap{min-height:720px}
+}
+</style>
+
+<style>
+.tile,
+.tile:hover,
+.tile:focus,
+.tile:active{
+  transform:none !important;
+}
+.tile:hover{
+  background:linear-gradient(145deg,#19233f,#11192f) !important;
+}
+.tile.definition:hover{box-shadow:inset 0 5px 0 var(--purple) !important;}
+.tile.word:hover{box-shadow:inset 0 5px 0 var(--blue) !important;}
+.tile.sentence:hover{box-shadow:inset 0 5px 0 var(--green) !important;}
+.tile.claimed.x,
+.tile.claimed.x:hover{
+  background:var(--blue) !important;
+  box-shadow:none !important;
+}
+.tile.claimed.o,
+.tile.claimed.o:hover{
+  background:var(--red) !important;
+  box-shadow:none !important;
+}
+</style>
+
+</head>
+<body>
+<div class="app">
+  <header class="card">
+    <div class="brand"><div class="logo">XO</div>Vocabulary Tic-Tac-Toe</div>
+    <div class="top-actions">
+      <button class="btn" id="editBtn">Edit Vocabulary</button>
+      <button class="btn" id="newBoardBtn">New Board</button>
+      <button class="btn danger" id="resetBtn">Reset Game</button>
+    </div>
+  </header>
+
+  <main class="game">
+    <section class="card board-wrap">
+      <div class="board" id="board"></div>
+    </section>
+
+    <aside class="card side">
+      <div class="turn">
+        <small>Current Turn</small>
+        <strong id="turnText">Blue Team · X</strong>
+      </div>
+
+      <div class="team">
+        <div class="team-symbol x">X</div>
+        <input id="xName" value="Blue Team" maxlength="18">
+      </div>
+
+      <div class="team">
+        <div class="team-symbol o">O</div>
+        <input id="oName" value="Red Team" maxlength="18">
+      </div>
+
+      <div class="help">
+        Click any open vocabulary square to claim it immediately with the current team's X or O. The turn then switches. First team to get three in a row wins.
+      </div>
+    </aside>
+  </main>
+</div>
+
+<div class="modal-bg" id="editModal">
+  <div class="modal">
+    <h2>Edit Vocabulary</h2>
+    <p>Use one line per word: <strong>word | definition</strong></p>
+    <textarea id="vocabText"></textarea>
+    <div class="modal-actions">
+      <button class="btn" id="cancelEdit">Cancel</button>
+      <button class="btn" id="saveEdit">Save Vocabulary</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="winnerModal">
+  <div class="modal winner">
+    <div>Winner</div>
+    <div class="big" id="winnerText">Blue Team wins!</div>
+    <div class="sub">Three in a row!</div>
+    <div class="modal-actions" style="justify-content:center">
+      <button class="btn" id="viewBoard">View Board</button>
+      <button class="btn" id="playAgain">Play Again</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  const DEFAULT = [
+    ["ancestor","a person in your family who lived a long time ago"],
+    ["adaptation","a change that helps a living thing survive"],
+    ["celebrate","to do something special for an important or happy event"],
+    ["community","a group of people living or working together in the same area"],
+    ["culture","the ideas, customs, arts, and way of life of a group of people"],
+    ["evidence","facts or information that help prove something"],
+    ["folklore","traditional stories and beliefs passed through generations"],
+    ["heritage","traditions, history, and culture passed down from the past"],
+    ["migrate","to move from one place to another"],
+    ["pioneer","a person who is among the first to explore or develop something"],
+    ["tradition","a custom or belief passed from one generation to another"],
+    ["belief","something a person thinks is true"]
+  ];
+
+  const state = {
+    vocab:[...DEFAULT],
+    cells:Array(9).fill(null),
+    prompts:[],
+    turn:"X",
+    gameOver:false
+  };
+
+  const $ = id => document.getElementById(id);
+  const els = {
+    board:$("board"),
+    turnText:$("turnText"),
+    xName:$("xName"),
+    oName:$("oName"),
+    editBtn:$("editBtn"),
+    newBoardBtn:$("newBoardBtn"),
+    resetBtn:$("resetBtn"),
+    editModal:$("editModal"),
+    vocabText:$("vocabText"),
+    cancelEdit:$("cancelEdit"),
+    saveEdit:$("saveEdit"),
+    winnerModal:$("winnerModal"),
+    winnerText:$("winnerText"),
+    viewBoard:$("viewBoard"),
+    playAgain:$("playAgain")
+  };
+
+  function teamName(mark){
+    return mark === "X"
+      ? (els.xName.value.trim() || "Blue Team")
+      : (els.oName.value.trim() || "Red Team");
+  }
+
+  function shuffle(arr){
+    const a=[...arr];
+    for(let i=a.length-1;i>0;i--){
+      const j=Math.floor(Math.random()*(i+1));
+      [a[i],a[j]]=[a[j],a[i]];
+    }
+    return a;
+  }
+
+  function makePrompts(){
+    const pool=shuffle(state.vocab);
+    const types=["definition","word","sentence"];
+    state.prompts=Array.from({length:9},(_,i)=>{
+      const [word,definition]=pool[i%pool.length] || ["word","a vocabulary word"];
+      const type=types[i%3];
+      if(type==="definition"){
+        return {type,label:"Definition",text:definition};
+      }
+      if(type==="word"){
+        return {type,label:"Word",text:word};
+      }
+      return {type,label:"Sentence",text:`Use "${word}" in a sentence`};
+    });
+  }
+
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"']/g,ch=>({
+      "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+    }[ch]));
+  }
+
+  function renderBoard(){
+    els.board.innerHTML="";
+    for(let i=0;i<9;i++){
+      const mark=state.cells[i];
+      const p=state.prompts[i];
+      const btn=document.createElement("button");
+      btn.type="button";
+      btn.className="tile";
+
+      if(mark){
+        btn.classList.add("claimed",mark.toLowerCase());
+        btn.innerHTML=`<div class="mark">${mark}</div>`;
+        btn.disabled=true;
+      }else{
+        btn.classList.add(p.type);
+        btn.innerHTML=`
+          <div class="type">${p.label}</div>
+          <div class="num">${i+1}</div>
+          <div class="prompt">${escapeHtml(p.text)}</div>
+        `;
+        btn.addEventListener("click",()=>claim(i));
+      }
+      els.board.appendChild(btn);
+    }
+  }
+
+  function renderTurn(){
+    els.turnText.textContent=`${teamName(state.turn)} · ${state.turn}`;
+    els.turnText.style.color=state.turn==="X" ? "var(--blue)" : "var(--red)";
+  }
+
+  function render(){
+    renderBoard();
+    renderTurn();
+    save();
+  }
+
+  function claim(i){
+    if(state.gameOver || state.cells[i]) return;
+
+    state.cells[i]=state.turn;
+
+    const winner=checkWinner();
+    if(winner){
+      state.gameOver=true;
+      els.winnerText.textContent=`${teamName(winner)} wins!`;
+      els.winnerModal.classList.add("show");
+    }else if(state.cells.every(Boolean)){
+      state.gameOver=true;
+      els.winnerText.textContent="It's a draw!";
+      els.winnerModal.classList.add("show");
+    }else{
+      state.turn=state.turn==="X" ? "O" : "X";
+    }
+
+    render();
+  }
+
+  function checkWinner(){
+    const wins=[
+      [0,1,2],[3,4,5],[6,7,8],
+      [0,3,6],[1,4,7],[2,5,8],
+      [0,4,8],[2,4,6]
+    ];
+    for(const [a,b,c] of wins){
+      if(state.cells[a] && state.cells[a]===state.cells[b] && state.cells[a]===state.cells[c]){
+        return state.cells[a];
+      }
+    }
+    return null;
+  }
+
+  function newBoard(){
+    state.cells=Array(9).fill(null);
+    state.turn="X";
+    state.gameOver=false;
+    makePrompts();
+    els.winnerModal.classList.remove("show");
+    render();
+  }
+
+  function parseVocab(text){
+    const out=[];
+    const seen=new Set();
+    for(const raw of text.split("\n")){
+      const line=raw.trim();
+      if(!line) continue;
+      const parts=line.split("|");
+      if(parts.length<2) continue;
+      const word=parts.shift().trim();
+      const definition=parts.join("|").trim();
+      if(!word || !definition) continue;
+      const key=word.toLowerCase();
+      if(!seen.has(key)){
+        seen.add(key);
+        out.push([word,definition]);
+      }
+    }
+    return out;
+  }
+
+  function save(){
+    try{
+      localStorage.setItem("vocab-tic-tac-toe-simple",JSON.stringify({
+        vocab:state.vocab,
+        xName:els.xName.value,
+        oName:els.oName.value
+      }));
+    }catch(e){}
+  }
+
+  function load(){
+    try{
+      const raw=localStorage.getItem("vocab-tic-tac-toe-simple");
+      if(!raw) return;
+      const s=JSON.parse(raw);
+      if(Array.isArray(s.vocab) && s.vocab.length>=3) state.vocab=s.vocab;
+      els.xName.value=s.xName || "Blue Team";
+      els.oName.value=s.oName || "Red Team";
+    }catch(e){}
+  }
+
+  els.editBtn.addEventListener("click",()=>{
+    els.vocabText.value=state.vocab.map(([w,d])=>`${w} | ${d}`).join("\n");
+    els.editModal.classList.add("show");
+  });
+
+  els.cancelEdit.addEventListener("click",()=>els.editModal.classList.remove("show"));
+
+  els.saveEdit.addEventListener("click",()=>{
+    const parsed=parseVocab(els.vocabText.value);
+    if(parsed.length<3){
+      alert("Please add at least 3 valid vocabulary items.");
+      return;
+    }
+    state.vocab=parsed;
+    els.editModal.classList.remove("show");
+    newBoard();
+  });
+
+  els.newBoardBtn.addEventListener("click",newBoard);
+  els.resetBtn.addEventListener("click",()=>{
+    if(confirm("Reset the game and generate a new board?")) newBoard();
+  });
+
+  els.viewBoard.addEventListener("click",()=>els.winnerModal.classList.remove("show"));
+  els.playAgain.addEventListener("click",newBoard);
+
+  [els.xName,els.oName].forEach(input=>{
+    input.addEventListener("input",()=>{
+      renderTurn();
+      save();
+    });
+  });
+
+  els.editModal.addEventListener("click",e=>{
+    if(e.target===els.editModal) els.editModal.classList.remove("show");
+  });
+  els.winnerModal.addEventListener("click",e=>{
+    if(e.target===els.winnerModal) els.winnerModal.classList.remove("show");
+  });
+
+  document.addEventListener("keydown",e=>{
+    if(["INPUT","TEXTAREA"].includes(document.activeElement?.tagName)) return;
+    const n=Number(e.key);
+    if(n>=1 && n<=9) claim(n-1);
+  });
+
+  load();
+  makePrompts();
+  render();
+})();
+</script>
+</body>
+</html>

@@ -4,6 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Sentence Stretch</title>
+<link rel="stylesheet" href="game-nav.css">
 <style>
   :root{
     --bg:#f4f7fb;
@@ -584,7 +585,7 @@
   }
 </style>
 </head>
-<body>
+<body data-game-title="Sentence Stretch" data-game-subtitle="Build richer sentences" data-game-icon="🎙️">
 <div class="app">
   <div class="shell">
     <div class="topbar">
@@ -1149,7 +1150,14 @@
   updateStats();
   updateHistory();
   updateTurnRules();
+  window.addEventListener("game-nav:import-list", event => {
+    const imported = Array.isArray(event.detail?.words) ? event.detail.words.map(String).map(value => value.trim()).filter(Boolean) : [];
+    if (!imported.length) return;
+    $("speechText").value = imported[0];
+    setFeedback("good", `${imported.length} items imported. The first one is ready to use.`);
+  });
 })();
 </script>
+<script src="game-nav.js"></script>
 </body>
 </html>

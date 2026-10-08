@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Sentence Scramble</title>
+<style>
+:root{
+  --bg:#0b1020;
+  --panel:#121a30;
+  --panel2:#18223f;
+  --line:rgba(255,255,255,.11);
+  --text:#f7f9ff;
+  --muted:#9eabc7;
+  --accent:#756cff;
+  --blue:#4f8cff;
+  --green:#48c99f;
+  --yellow:#f6c858;
+  --red:#ff617a;
+}
+*{box-sizing:border-box}
+html,body{width:100%;height:100%;margin:0;overflow:hidden}
+body{
+  font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;
+  color:var(--text);
+  background:
+    radial-gradient(circle at 14% 18%,rgba(117,108,255,.15),transparent 28%),
+    radial-gradient(circle at 88% 82%,rgba(72,201,159,.09),transparent 30%),
+    var(--bg);
+}
+button,textarea{font:inherit}
+button{user-select:none;-webkit-user-select:none}
+.app{
+  width:100vw;
+  height:100vh;
+  height:100dvh;
+  display:grid;
+  grid-template-rows:auto minmax(0,1fr);
+  gap:10px;
+  padding:10px;
+  overflow:hidden;
+}
+.card{
+  background:linear-gradient(180deg,rgba(255,255,255,.048),rgba(255,255,255,.026));
+  border:1px solid var(--line);
+  border-radius:22px;
+}
+header{
+  min-height:58px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:9px 13px;
+}
+.brand{
+  display:flex;
+  align-items:center;
+  gap:11px;
+  font-size:clamp(22px,2.2vw,34px);
+  font-weight:1000;
+  letter-spacing:-.045em;
+}
+.logo{
+  width:44px;height:44px;
+  display:grid;place-items:center;
+  border-radius:14px;
+  background:linear-gradient(135deg,var(--accent),#9d73ff);
+  font-weight:1000;
+}
+.top-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.btn{
+  border:1px solid rgba(255,255,255,.1);
+  background:var(--panel2);
+  color:var(--text);
+  border-radius:13px;
+  padding:9px 12px;
+  font-weight:900;
+  cursor:pointer;
+}
+.btn:hover{background:#202d50}
+.btn.primary{background:linear-gradient(135deg,#8177ff,#6258e9)}
+.btn.good{background:linear-gradient(135deg,#5be0a5,#2ec28a);color:#07150f}
+.btn.danger{background:linear-gradient(135deg,#ff7187,#e84d66)}
+.game{
+  min-width:0;
+  min-height:0;
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 265px;
+  gap:10px;
+  overflow:hidden;
+}
+.main{
+  min-width:0;
+  min-height:0;
+  padding:14px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+  overflow:hidden;
+}
+.topline{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+}
+.round-label{
+  color:var(--muted);
+  text-transform:uppercase;
+  font-size:10px;
+  font-weight:1000;
+  letter-spacing:.12em;
+}
+.round-title{
+  margin-top:3px;
+  font-size:clamp(22px,2.4vw,34px);
+  font-weight:1000;
+}
+.score-chip{
+  flex:0 0 auto;
+  min-width:115px;
+  text-align:center;
+  padding:9px 12px;
+  border-radius:15px;
+  border:1px solid var(--line);
+  background:#0d1428;
+}
+.score-chip small{
+  display:block;
+  color:var(--muted);
+  font-size:9px;
+  text-transform:uppercase;
+  letter-spacing:.11em;
+  font-weight:1000;
+}
+.score-chip strong{
+  display:block;
+  margin-top:2px;
+  font-size:26px;
+}
+.scramble-area{
+  flex:1;
+  min-height:0;
+  border:1px solid var(--line);
+  border-radius:22px;
+  background:
+    radial-gradient(circle at 50% 15%,rgba(255,255,255,.06),transparent 28%),
+    #0f172c;
+  padding:20px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  overflow:hidden;
+}
+.words{
+  width:100%;
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  justify-content:center;
+  gap:12px;
+}
+.word{
+  border:1px solid rgba(255,255,255,.14);
+  border-radius:15px;
+  background:linear-gradient(145deg,#1d2949,#131d35);
+  color:var(--text);
+  padding:14px 18px;
+  min-height:58px;
+  display:grid;
+  place-items:center;
+  font-size:clamp(18px,2vw,31px);
+  line-height:1;
+  font-weight:1000;
+  cursor:grab;
+  transition:none;
+  touch-action:manipulation;
+}
+.word:active{cursor:grabbing}
+.word.selected{
+  outline:4px solid rgba(255,255,255,.85);
+  background:linear-gradient(145deg,#756cff,#5d53d9);
+}
+.word.dragging{opacity:.45}
+.word.correct-pos{
+  box-shadow:inset 0 -5px 0 var(--green);
+}
+.instruction{
+  color:var(--muted);
+  text-align:center;
+  font-size:13px;
+  font-weight:750;
+}
+.actions{
+  display:grid;
+  grid-template-columns:1fr 1.25fr 1fr;
+  gap:9px;
+}
+.actions .btn{
+  min-height:50px;
+  font-size:15px;
+}
+.feedback{
+  min-height:68px;
+  border:1px solid var(--line);
+  border-radius:17px;
+  background:rgba(255,255,255,.04);
+  padding:11px 13px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  color:#cbd3e6;
+  font-weight:850;
+  line-height:1.35;
+}
+.feedback.perfect{
+  color:#c5f6df;
+  background:rgba(72,201,159,.10);
+  border-color:rgba(72,201,159,.25);
+}
+.side{
+  min-width:0;
+  min-height:0;
+  padding:12px;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  overflow:hidden;
+}
+.stat{
+  border:1px solid var(--line);
+  border-radius:16px;
+  background:rgba(255,255,255,.04);
+  padding:11px;
+}
+.stat small{
+  display:block;
+  color:var(--muted);
+  text-transform:uppercase;
+  font-size:9px;
+  letter-spacing:.11em;
+  font-weight:1000;
+}
+.stat strong{
+  display:block;
+  margin-top:4px;
+  font-size:30px;
+}
+.legend{
+  border:1px solid rgba(117,108,255,.17);
+  background:rgba(117,108,255,.075);
+  border-radius:14px;
+  padding:10px;
+  color:#cbd3e6;
+  font-size:11px;
+  line-height:1.45;
+}
+.legend strong{display:block;color:var(--text);margin-bottom:4px}
+.side .btn{width:100%}
+.modal-bg{
+  position:fixed;
+  inset:0;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+  background:rgba(3,6,15,.8);
+  z-index:20;
+}
+.modal-bg.show{display:flex}
+.modal{
+  width:min(760px,96vw);
+  max-height:90vh;
+  overflow:auto;
+  background:#11182d;
+  border:1px solid var(--line);
+  border-radius:24px;
+  padding:22px;
+}
+.modal h2{margin:0 0 8px}
+.modal p{color:#c5cee0;line-height:1.5}
+.modal textarea{
+  width:100%;
+  min-height:360px;
+  resize:vertical;
+  background:#0c1326;
+  color:var(--text);
+  border:1px solid var(--line);
+  border-radius:14px;
+  padding:12px;
+  font-size:16px;
+  line-height:1.5;
+}
+.modal-actions{
+  display:flex;
+  justify-content:flex-end;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-top:12px;
+}
+@media(max-height:760px){
+  .app{padding:6px;gap:6px}
+  header{min-height:48px;padding:5px 9px}
+  .logo{width:36px;height:36px}
+  .brand{font-size:22px}
+  .top-actions .btn{padding:6px 8px;font-size:11px}
+  .game{grid-template-columns:minmax(0,1fr) 235px;gap:6px}
+  .main{padding:9px;gap:8px}
+  .scramble-area{padding:12px}
+  .words{gap:8px}
+  .word{padding:9px 13px;min-height:46px;font-size:clamp(15px,1.6vw,24px)}
+  .actions .btn{min-height:39px;padding:6px;font-size:12px}
+  .feedback{min-height:48px;font-size:12px}
+  .side{padding:8px;gap:7px}
+  .stat{padding:8px}
+  .stat strong{font-size:24px}
+  .legend{font-size:9px;padding:7px}
+}
+@media(max-width:850px){
+  .game{grid-template-columns:minmax(0,1fr) 190px}
+  .brand{font-size:18px}
+  .logo{width:32px;height:32px}
+  .top-actions .btn{padding:5px 7px;font-size:10px}
+  .word{font-size:clamp(12px,1.7vw,18px);padding:8px 10px}
+  .side{padding:7px}
+  .legend{font-size:9px}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="card">
+    <div class="brand"><div class="logo">↔</div>Sentence Scramble</div>
+    <div class="top-actions">
+      <button class="btn" id="editBtn">Edit Sentences</button>
+      <button class="btn" id="newBtn">New Sentence</button>
+      <button class="btn danger" id="resetScoreBtn">Reset Score</button>
+    </div>
+  </header>
+
+  <main class="game">
+    <section class="card main">
+      <div class="topline">
+        <div>
+          <div class="round-label">Sentence <span id="roundNumber">1</span></div>
+          <div class="round-title">Put the words in the correct order</div>
+        </div>
+        <div class="score-chip">
+          <small>Last Score</small>
+          <strong id="lastScore">—</strong>
+        </div>
+      </div>
+
+      <div class="scramble-area">
+        <div class="words" id="words"></div>
+      </div>
+
+      <div class="instruction">Drag words to reorder them, or tap one word and then another to swap them.</div>
+
+      <div class="actions">
+        <button class="btn" id="shuffleBtn">Shuffle Again</button>
+        <button class="btn good" id="checkBtn">Check Sentence</button>
+        <button class="btn" id="answerBtn">Show Answer</button>
+      </div>
+
+      <div class="feedback" id="feedback">Arrange the words, then press <strong style="margin-left:4px">Check Sentence</strong>.</div>
+    </section>
+
+    <aside class="card side">
+      <div class="stat">
+        <small>Total Points</small>
+        <strong id="totalScore">0</strong>
+      </div>
+
+      <div class="stat">
+        <small>Best Sentence</small>
+        <strong id="bestScore">0</strong>
+      </div>
+
+      <div class="stat">
+        <small>Perfect Sentences</small>
+        <strong id="perfectCount">0</strong>
+      </div>
+
+      <div class="legend">
+        <strong>How scoring works</strong>
+        60% of the score comes from words being in the exact correct position. 40% comes from correct word pairs sitting next to each other. An exact sentence scores 100 points.
+      </div>
+
+      <button class="btn primary" id="nextBtn">Next Sentence</button>
+    </aside>
+  </main>
+</div>
+
+<div class="modal-bg" id="editModal">
+  <div class="modal">
+    <h2>Edit Sentences</h2>
+    <p>Add one sentence per line. Punctuation stays attached to the word it belongs to.</p>
+    <textarea id="sentenceText"></textarea>
+    <div class="modal-actions">
+      <button class="btn" id="cancelEdit">Cancel</button>
+      <button class="btn primary" id="saveEdit">Save Sentences</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  const DEFAULT_SENTENCES = [
+    "The pioneer travelled across the mountains to explore new land.",
+    "Our community celebrates its culture through food music and stories.",
+    "Scientists use evidence to explain how animals adapt to their habitats.",
+    "The emperor ruled a large region with many different traditions.",
+    "Students should recycle paper plastic and metal to reduce waste.",
+    "A strong paragraph begins with a clear topic sentence.",
+    "The climate of a place affects the plants and animals that live there.",
+    "Good research uses reliable sources and records important information.",
+    "Many families pass traditions from one generation to the next.",
+    "The children worked together to find a solution to the problem.",
+    "Pollution can damage rivers forests oceans and wildlife.",
+    "The author changed the setting to show that time had passed."
+  ];
+
+  const state = {
+    sentences:[...DEFAULT_SENTENCES],
+    currentSentence:"",
+    target:[],
+    tiles:[],
+    selected:null,
+    draggedIndex:null,
+    round:1,
+    total:0,
+    best:0,
+    perfect:0,
+    checkedThisRound:false
+  };
+
+  const $ = id => document.getElementById(id);
+  const els = {
+    words:$("words"),
+    roundNumber:$("roundNumber"),
+    lastScore:$("lastScore"),
+    totalScore:$("totalScore"),
+    bestScore:$("bestScore"),
+    perfectCount:$("perfectCount"),
+    feedback:$("feedback"),
+    editBtn:$("editBtn"),
+    newBtn:$("newBtn"),
+    resetScoreBtn:$("resetScoreBtn"),
+    shuffleBtn:$("shuffleBtn"),
+    checkBtn:$("checkBtn"),
+    answerBtn:$("answerBtn"),
+    nextBtn:$("nextBtn"),
+    editModal:$("editModal"),
+    sentenceText:$("sentenceText"),
+    cancelEdit:$("cancelEdit"),
+    saveEdit:$("saveEdit")
+  };
+
+  function tokenize(sentence){
+    return sentence.trim().split(/\s+/).filter(Boolean);
+  }
+
+  function shuffleArray(arr){
+    const a=[...arr];
+    for(let i=a.length-1;i>0;i--){
+      const j=Math.floor(Math.random()*(i+1));
+      [a[i],a[j]]=[a[j],a[i]];
+    }
+    return a;
+  }
+
+  function makeShuffled(words){
+    if(words.length < 2) return [...words];
+    let out=shuffleArray(words);
+    let tries=0;
+    while(out.join("\u0001")===words.join("\u0001") && tries<20){
+      out=shuffleArray(words);
+      tries++;
+    }
+    return out;
+  }
+
+  function pickSentence(){
+    if(!state.sentences.length) state.sentences=[...DEFAULT_SENTENCES];
+    let next=state.sentences[Math.floor(Math.random()*state.sentences.length)];
+    if(state.sentences.length>1 && next===state.currentSentence){
+      let guard=0;
+      while(next===state.currentSentence && guard<20){
+        next=state.sentences[Math.floor(Math.random()*state.sentences.length)];
+        guard++;
+      }
+    }
+    state.currentSentence=next;
+    state.target=tokenize(next);
+    state.tiles=makeShuffled(state.target);
+    state.selected=null;
+    state.draggedIndex=null;
+    state.checkedThisRound=false;
+    els.lastScore.textContent="—";
+    els.feedback.className="feedback";
+    els.feedback.textContent="Arrange the words, then press Check Sentence.";
+    render();
+  }
+
+  function render(){
+    els.words.innerHTML="";
+    state.tiles.forEach((word,i)=>{
+      const btn=document.createElement("button");
+      btn.type="button";
+      btn.className="word";
+      btn.draggable=true;
+      btn.textContent=word;
+
+      if(state.selected===i) btn.classList.add("selected");
+
+      btn.addEventListener("click",()=>tapWord(i));
+
+      btn.addEventListener("dragstart",e=>{
+        state.draggedIndex=i;
+        btn.classList.add("dragging");
+        if(e.dataTransfer){
+          e.dataTransfer.effectAllowed="move";
+          e.dataTransfer.setData("text/plain",String(i));
+        }
+      });
+
+      btn.addEventListener("dragend",()=>{
+        btn.classList.remove("dragging");
+        state.draggedIndex=null;
+      });
+
+      btn.addEventListener("dragover",e=>{
+        e.preventDefault();
+        if(e.dataTransfer) e.dataTransfer.dropEffect="move";
+      });
+
+      btn.addEventListener("drop",e=>{
+        e.preventDefault();
+        let from=state.draggedIndex;
+        if(from===null && e.dataTransfer){
+          const parsed=Number(e.dataTransfer.getData("text/plain"));
+          if(Number.isInteger(parsed)) from=parsed;
+        }
+        if(from===null || from===i || from<0 || from>=state.tiles.length) return;
+        moveTile(from,i);
+      });
+
+      els.words.appendChild(btn);
+    });
+
+    els.roundNumber.textContent=state.round;
+    els.totalScore.textContent=state.total;
+    els.bestScore.textContent=state.best;
+    els.perfectCount.textContent=state.perfect;
+    save();
+  }
+
+  function tapWord(i){
+    if(state.selected===null){
+      state.selected=i;
+      render();
+      return;
+    }
+    if(state.selected===i){
+      state.selected=null;
+      render();
+      return;
+    }
+    const a=state.selected;
+    [state.tiles[a],state.tiles[i]]=[state.tiles[i],state.tiles[a]];
+    state.selected=null;
+    render();
+  }
+
+  function moveTile(from,to){
+    const [item]=state.tiles.splice(from,1);
+    state.tiles.splice(to,0,item);
+    state.selected=null;
+    render();
+  }
+
+  function exactPositionCount(){
+    let n=0;
+    for(let i=0;i<state.target.length;i++){
+      if(state.tiles[i]===state.target[i]) n++;
+    }
+    return n;
+  }
+
+  function correctPairCount(){
+    if(state.target.length<=1) return state.target.length===1 ? 1 : 0;
+    let n=0;
+    for(let i=0;i<state.target.length-1;i++){
+      if(state.tiles[i]===state.target[i] && state.tiles[i+1]===state.target[i+1]) n++;
+    }
+    return n;
+  }
+
+  function calculateScore(){
+    const len=state.target.length;
+    if(len===0) return 0;
+    if(state.tiles.join("\u0001")===state.target.join("\u0001")) return 100;
+
+    const positionRatio=exactPositionCount()/len;
+    const pairRatio=len>1 ? correctPairCount()/(len-1) : positionRatio;
+    return Math.max(0,Math.min(99,Math.round(positionRatio*60 + pairRatio*40)));
+  }
+
+  function checkSentence(){
+    const score=calculateScore();
+    const exact=score===100;
+    const correctPositions=exactPositionCount();
+    const pairs=state.target.length>1 ? correctPairCount() : correctPositions;
+
+    els.lastScore.textContent=score;
+    state.best=Math.max(state.best,score);
+
+    if(!state.checkedThisRound){
+      state.total+=score;
+      if(exact) state.perfect++;
+      state.checkedThisRound=true;
+    }
+
+    if(exact){
+      els.feedback.className="feedback perfect";
+      els.feedback.textContent="Perfect! The sentence is exactly correct. 100 points.";
+    }else{
+      els.feedback.className="feedback";
+      els.feedback.textContent=
+        `${score} points — ${correctPositions}/${state.target.length} words are in the exact position` +
+        (state.target.length>1 ? ` and ${pairs}/${state.target.length-1} neighboring pairs are correct.` : ".");
+    }
+
+    render();
+  }
+
+  function showAnswer(){
+    state.tiles=[...state.target];
+    state.selected=null;
+    els.feedback.className="feedback perfect";
+    els.feedback.textContent="This is the correct sentence order.";
+    render();
+  }
+
+  function resetScores(){
+    if(!confirm("Reset all sentence scores?")) return;
+    state.total=0;
+    state.best=0;
+    state.perfect=0;
+    state.round=1;
+    pickSentence();
+  }
+
+  function parseSentences(text){
+    const seen=new Set();
+    const out=[];
+    for(const raw of text.split("\n")){
+      const s=raw.trim();
+      if(!s) continue;
+      const key=s.toLowerCase();
+      if(!seen.has(key)){
+        seen.add(key);
+        out.push(s);
+      }
+    }
+    return out.slice(0,200);
+  }
+
+  function save(){
+    try{
+      localStorage.setItem("sentence-scramble-state",JSON.stringify({
+        sentences:state.sentences,
+        total:state.total,
+        best:state.best,
+        perfect:state.perfect
+      }));
+    }catch(e){}
+  }
+
+  function load(){
+    try{
+      const raw=localStorage.getItem("sentence-scramble-state");
+      if(!raw) return;
+      const s=JSON.parse(raw);
+      if(Array.isArray(s.sentences)&&s.sentences.length) state.sentences=s.sentences;
+      state.total=Number(s.total)||0;
+      state.best=Number(s.best)||0;
+      state.perfect=Number(s.perfect)||0;
+    }catch(e){}
+  }
+
+  els.shuffleBtn.addEventListener("click",()=>{
+    state.tiles=makeShuffled(state.target);
+    state.selected=null;
+    els.feedback.className="feedback";
+    els.feedback.textContent="Shuffled again.";
+    render();
+  });
+
+  els.checkBtn.addEventListener("click",checkSentence);
+  els.answerBtn.addEventListener("click",showAnswer);
+
+  els.nextBtn.addEventListener("click",()=>{
+    state.round++;
+    pickSentence();
+  });
+
+  els.newBtn.addEventListener("click",()=>{
+    state.round++;
+    pickSentence();
+  });
+
+  els.resetScoreBtn.addEventListener("click",resetScores);
+
+  els.editBtn.addEventListener("click",()=>{
+    els.sentenceText.value=state.sentences.join("\n");
+    els.editModal.classList.add("show");
+  });
+
+  els.cancelEdit.addEventListener("click",()=>els.editModal.classList.remove("show"));
+
+  els.saveEdit.addEventListener("click",()=>{
+    const parsed=parseSentences(els.sentenceText.value);
+    if(!parsed.length){
+      alert("Please add at least one sentence.");
+      return;
+    }
+    state.sentences=parsed;
+    els.editModal.classList.remove("show");
+    state.round++;
+    pickSentence();
+  });
+
+  els.editModal.addEventListener("click",e=>{
+    if(e.target===els.editModal) els.editModal.classList.remove("show");
+  });
+
+  load();
+  pickSentence();
+})();
+</script>
+</body>
+</html>

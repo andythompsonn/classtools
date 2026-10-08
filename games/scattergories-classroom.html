@@ -1,0 +1,1013 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+<title>Scattergories Classroom</title>
+<style>
+:root{
+  --bg:#0b1020;
+  --panel:#121a30;
+  --panel2:#18223f;
+  --line:rgba(255,255,255,.10);
+  --text:#f7f9ff;
+  --muted:#9eabc7;
+  --accent:#7c6cff;
+  --accent2:#4bc9b0;
+  --danger:#ff657a;
+  --warn:#ffd166;
+  --good:#56df9f;
+  --shadow:0 18px 50px rgba(0,0,0,.28);
+}
+*{box-sizing:border-box}
+html,body{
+  width:100%;
+  height:100%;
+  margin:0;
+  overflow:hidden;
+}
+body{
+  font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  color:var(--text);
+  background:
+    radial-gradient(circle at 12% 20%,rgba(124,108,255,.16),transparent 28%),
+    radial-gradient(circle at 88% 80%,rgba(75,201,176,.10),transparent 30%),
+    var(--bg);
+  overflow:hidden;
+}
+button,input,select,textarea{font:inherit}
+button{user-select:none;-webkit-user-select:none}
+.app{
+  width:100vw;
+  height:100vh;
+  height:100dvh;
+  max-width:100vw;
+  max-height:100vh;
+  max-height:100dvh;
+  overflow:hidden;
+  display:grid;
+  grid-template-rows:auto minmax(0,1fr);
+  gap:10px;
+  padding:10px;
+}
+.card{
+  background:linear-gradient(180deg,rgba(255,255,255,.045),rgba(255,255,255,.025));
+  border:1px solid var(--line);
+  border-radius:24px;
+  box-shadow:var(--shadow);
+  backdrop-filter:blur(12px);
+}
+.banner{
+  width:100%;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:10px 14px;
+  min-height:58px;
+  overflow:hidden;
+}
+.brand{
+  display:flex;
+  align-items:center;
+  gap:13px;
+  font-size:clamp(24px,2.5vw,38px);
+  font-weight:1000;
+  letter-spacing:-.045em;
+  white-space:nowrap;
+}
+.mark{
+  width:48px;height:48px;border-radius:15px;
+  display:grid;place-items:center;
+  background:linear-gradient(135deg,var(--accent),#9c73ff);
+  font-size:24px;font-weight:1000;
+  box-shadow:0 10px 24px rgba(124,108,255,.26);
+}
+.banner-actions{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:8px;
+  flex-wrap:wrap;
+}
+.btn{
+  border:1px solid rgba(255,255,255,.09);
+  border-radius:14px;
+  padding:11px 14px;
+  background:var(--panel2);
+  color:var(--text);
+  font-weight:900;
+  cursor:pointer;
+  transition:.15s ease;
+}
+.btn:hover{transform:translateY(-1px);background:#202d50}
+.btn:active{transform:none}
+.btn.primary{background:linear-gradient(135deg,#8475ff,#6757ea)}
+.btn.good{background:linear-gradient(135deg,#56df9f,#2abf86);color:#07150f}
+.btn.danger{background:linear-gradient(135deg,#ff7186,#e84c65)}
+.btn.ghost{background:rgba(255,255,255,.045)}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+
+.content{
+  min-width:0;
+  min-height:0;
+  width:100%;
+  height:100%;
+  overflow:hidden;
+  display:block;
+}
+.game-card{
+  min-width:0;
+  min-height:0;
+  width:100%;
+  height:100%;
+  overflow:hidden;
+  padding:10px;
+  display:grid;
+  grid-template-columns:220px minmax(0,1fr);
+  gap:12px;
+}
+.round-panel{
+  min-width:0;
+  min-height:0;
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.letter-box{
+  flex:1 1 auto;
+  min-height:120px;
+  display:grid;
+  place-items:center;
+  text-align:center;
+  border-radius:18px;
+  background:
+    radial-gradient(circle at 50% 25%,rgba(255,255,255,.16),transparent 34%),
+    linear-gradient(145deg,#7d6dff,#5a49dc);
+  border:1px solid rgba(255,255,255,.16);
+  box-shadow:inset 0 -6px 0 rgba(0,0,0,.11);
+}
+.letter-box.hidden-letter{
+  background:
+    radial-gradient(circle at 50% 25%,rgba(255,255,255,.09),transparent 34%),
+    linear-gradient(145deg,#2a3350,#1b243f);
+}
+.letter-box > div{
+  width:100%;
+  text-align:center;
+}
+.letter-small{
+  display:block;
+  text-align:center;
+  text-transform:uppercase;
+  letter-spacing:.15em;
+  font-size:12px;
+  font-weight:1000;
+  opacity:.8;
+}
+.big-letter{
+  font-size:clamp(105px,12vw,170px);
+  line-height:.85;
+  font-weight:1000;
+  letter-spacing:-.08em;
+  width:100%;
+  text-align:center;
+}
+.letter-hint{
+  color:rgba(255,255,255,.7);
+  text-align:center;
+  font-size:12px;
+  font-weight:800;
+  margin-top:10px;
+}
+.timer-card{
+  flex:0 0 auto;
+  text-align:center;
+  padding:8px 6px;
+  border-radius:14px;
+  background:#0d1428;
+  border:1px solid var(--line);
+}
+.timer-label{
+  color:var(--muted);
+  text-transform:uppercase;
+  letter-spacing:.13em;
+  font-size:11px;
+  font-weight:1000;
+}
+.timer{
+  font-size:clamp(42px,5vw,68px);
+  line-height:1.05;
+  font-weight:1000;
+  font-variant-numeric:tabular-nums;
+  margin-top:4px;
+}
+.timer.warning{color:var(--warn)}
+.timer.danger{color:#ff8b9b;animation:pulse .8s infinite alternate}
+@keyframes pulse{to{transform:scale(1.04)}}
+.timer-controls{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+}
+.timer-controls .btn{padding:13px 8px}
+.round-meta{
+  flex:0 0 auto;
+  background:rgba(255,255,255,.045);
+  border:1px solid var(--line);
+  border-radius:13px;
+  padding:8px 10px;
+}
+.round-meta strong{display:block;font-size:20px}
+.round-meta span{color:var(--muted);font-size:12px;font-weight:750}
+
+
+.round-settings 
+
+.round-settings{
+  width:100%;
+  margin-top:2px;
+}
+.option-grid{
+  display:grid;
+  grid-template-columns:1fr;
+  gap:8px;
+  width:100%;
+}
+.option{
+  width:100%;
+  min-width:0;
+  padding:10px;
+  border:1px solid rgba(255,255,255,.10);
+  border-radius:14px;
+  background:rgba(255,255,255,.045);
+}
+.option label{
+  display:block;
+  margin:0 0 7px 2px;
+  color:var(--muted);
+  font-size:10px;
+  line-height:1;
+  font-weight:1000;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+}
+.option select{
+  display:block;
+  width:100%;
+  min-width:0;
+  height:40px;
+  margin:0;
+  border:1px solid rgba(255,255,255,.13);
+  border-radius:10px;
+  padding:0 38px 0 12px;
+  color:var(--text);
+  background-color:#0d1428;
+  background-image:
+    linear-gradient(45deg,transparent 50%,#aeb9d1 50%),
+    linear-gradient(135deg,#aeb9d1 50%,transparent 50%);
+  background-position:
+    calc(100% - 17px) 16px,
+    calc(100% - 11px) 16px;
+  background-size:6px 6px,6px 6px;
+  background-repeat:no-repeat;
+  appearance:none;
+  -webkit-appearance:none;
+  font-size:14px;
+  font-weight:900;
+  line-height:40px;
+  outline:none;
+  cursor:pointer;
+}
+.option select:hover{
+  border-color:rgba(255,255,255,.22);
+  background-color:#111a31;
+}
+.option select:focus{
+  border-color:#8d80ff;
+  box-shadow:0 0 0 3px rgba(124,108,255,.16);
+}
+
+.categories-wrap{
+  min-width:0;
+  min-height:0;
+  width:100%;
+  height:100%;
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.category-head{
+  flex:0 0 auto;
+  display:flex;
+  align-items:end;
+  justify-content:space-between;
+  gap:10px;
+  width:100%;
+}
+.category-head h2{margin:0;font-size:31px;letter-spacing:-.03em}
+.category-head p{margin:4px 0 0;color:var(--muted);font-size:16px;font-weight:700}
+.categories{
+  flex:1 1 auto;
+  min-width:0;
+  min-height:0;
+  width:100%;
+  height:100%;
+  overflow:hidden;
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  grid-template-rows:repeat(5,minmax(0,1fr));
+  gap:8px;
+}
+.category{
+  position:relative;
+  min-width:0;
+  min-height:0;
+  overflow:hidden;
+  display:flex;
+  align-items:center;
+  border-radius:14px;
+  padding:8px 12px 8px 46px;
+  background:rgba(255,255,255,.048);
+  border:1px solid var(--line);
+  font-weight:900;
+  line-height:1.12;
+  font-size:clamp(15px,1.35vw,23px);
+}
+.category .num{
+  position:absolute;
+  left:11px;
+  width:28px;height:28px;
+  border-radius:9px;
+  display:grid;place-items:center;
+  background:rgba(124,108,255,.16);
+  color:#c8c0ff;
+  font-size:12px;font-weight:1000;
+}
+.categories.hidden-cats .category span:not(.num){filter:blur(8px);opacity:.25}
+
+
+
+
+
+
+.modal-backdrop{
+  position:fixed;
+  inset:0;
+  background:rgba(3,6,15,.76);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+  z-index:30;
+}
+.modal-backdrop.show{display:flex}
+.modal{
+  width:min(760px,96vw);
+  max-height:90vh;
+  overflow:auto;
+  border-radius:24px;
+  background:#11182d;
+  border:1px solid var(--line);
+  box-shadow:0 30px 90px rgba(0,0,0,.55);
+  padding:22px;
+}
+.modal h2{margin:0 0 8px;font-size:30px}
+.modal p,.modal li{color:#c6cee0;line-height:1.52}
+.modal textarea{
+  width:100%;
+  min-height:320px;
+  resize:vertical;
+  background:#0c1326;
+  color:var(--text);
+  border:1px solid var(--line);
+  border-radius:14px;
+  padding:12px;
+  line-height:1.5;
+  font-size:16px;
+}
+.modal-actions{
+  display:flex;
+  justify-content:flex-end;
+  gap:9px;
+  flex-wrap:wrap;
+  margin-top:15px;
+}
+.modal-note{
+  color:var(--muted);
+  font-size:12px;
+  font-weight:700;
+  margin:6px 0 10px;
+}
+@media(max-width:1050px){
+  body{overflow:auto}
+  .app{height:auto;min-height:100%}
+  .banner{align-items:flex-start}
+  .game-card{min-height:680px}
+}
+@media(max-width:760px){
+  .app{padding:10px;gap:10px}
+  .banner{flex-direction:column}
+  .brand{white-space:normal}
+  .banner-actions{justify-content:flex-start}
+  .game-card{grid-template-columns:1fr;min-height:0}
+  .round-panel{display:grid;grid-template-columns:1fr 1fr}
+  .letter-box{min-height:190px;grid-row:span 2}
+  .categories{grid-template-columns:1fr}
+  
+}
+@media(max-height:760px) and (min-width:1051px){
+  .app{padding:9px;gap:9px}
+  .banner{padding:9px 12px;min-height:60px}
+  .mark{width:42px;height:42px}
+  .game-card{padding:10px;grid-template-columns:175px 1fr;gap:10px}
+  .letter-box{min-height:175px}
+  .big-letter{font-size:108px}
+  .timer{font-size:45px}
+  .category{min-height:42px;padding-top:7px;padding-bottom:7px}
+  .control-card{padding:10px;gap:8px}
+  .instructions{padding:10px}
+}
+
+@media (max-height: 820px) and (min-width: 761px){
+  .brand{font-size:clamp(21px,2vw,30px)}
+  .mark{width:40px;height:40px;border-radius:12px}
+  .banner-actions .btn{padding:8px 10px;font-size:13px}
+  .big-letter{font-size:clamp(78px,9vw,125px)}
+  .letter-hint{font-size:10px;margin-top:5px}
+  .timer{font-size:clamp(34px,4vw,50px)}
+  .timer-controls .btn{padding:9px 7px}
+  .round-meta strong{font-size:17px}
+  .round-meta span{font-size:10px}
+  .option{padding:7px 8px}
+  .option label{font-size:9px;margin-bottom:5px}
+  .option select{height:36px;line-height:36px;font-size:12px}
+  .category-head h2{font-size:25px}
+  .category-head p{font-size:13px}
+  .category{font-size:clamp(14px,1.2vw,20px)}
+}
+@media (max-height: 680px) and (min-width: 761px){
+  .app{gap:7px;padding:7px}
+  .banner{min-height:50px;padding:7px 10px}
+  .game-card{padding:7px;gap:9px;grid-template-columns:195px minmax(0,1fr)}
+  .round-panel{gap:6px}
+  .letter-box{min-height:90px}
+  .big-letter{font-size:78px}
+  .timer-card{padding:5px}
+  .timer{font-size:34px}
+  .timer-label{font-size:9px}
+  .round-meta{padding:6px 8px}
+  .option{padding:5px 6px}
+  .option select{height:32px;line-height:32px;padding-left:9px}
+  .category-head h2{font-size:22px}
+  .category-head p{font-size:11px}
+  .category{font-size:14px;padding-top:5px;padding-bottom:5px}
+}
+
+
+@media(max-width:760px){
+  html,body{overflow:auto}
+  .app{
+    width:100%;
+    height:auto;
+    max-height:none;
+    overflow:visible;
+  }
+  .content{height:auto;overflow:visible}
+  .game-card{height:auto;overflow:visible}
+  .categories{
+    height:auto;
+    grid-template-columns:1fr;
+    grid-template-rows:none;
+  }
+}
+
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="card banner">
+    <div class="brand">
+      <div class="mark">S</div>
+      Scattergories Classroom
+    </div>
+    <div class="banner-actions">
+      <button class="btn ghost" id="newLetterBtn">New Letter</button>
+      <button class="btn ghost" id="newCategoriesBtn">New Categories</button>
+      <button class="btn ghost" id="editPromptsBtn">Edit Current Prompts</button>
+      <button class="btn ghost" id="manageBankTopBtn">Manage Categories</button>
+      <button class="btn danger" id="newGameBtn">New Game</button>
+    </div>
+  </header>
+
+  <main class="content">
+    <section class="card game-card">
+      <div class="round-panel">
+        <div class="letter-box hidden-letter" id="letterBox">
+          <div>
+            <span class="letter-small">Round Letter</span>
+            <div class="big-letter" id="letter">?</div>
+            <div class="letter-hint" id="letterHint">Press Start to reveal</div>
+          </div>
+        </div>
+
+        <div class="round-meta">
+          <strong id="roundNumber">Round 1</strong>
+          <span id="packLabel">Mixed categories</span>
+        </div>
+
+        <div class="timer-card">
+          <div class="timer-label">Time Remaining</div>
+          <div class="timer" id="timer">3:00</div>
+        </div>
+
+        <div class="timer-controls">
+          <button class="btn primary" id="startPauseBtn">Start</button>
+          <button class="btn ghost" id="resetTimerBtn">Reset</button>
+        </div>
+
+        <div class="round-settings">
+          <div class="option-grid">
+            <div class="option">
+              <label for="timerSelect">Round Time</label>
+              <select id="timerSelect">
+                <option value="60">1 minute</option>
+                <option value="90">1 min 30 sec</option>
+                <option value="120">2 minutes</option>
+                <option value="180" selected>3 minutes</option>
+                <option value="240">4 minutes</option>
+                <option value="300">5 minutes</option>
+              </select>
+            </div>
+            <div class="option">
+              <label for="packSelect">Category Pack</label>
+              <select id="packSelect">
+                <option value="mixed">Mixed</option>
+                <option value="general">General</option>
+                <option value="school">School</option>
+                <option value="world">World & Places</option>
+                <option value="food">Food</option>
+                <option value="funny">Funny</option>
+                <option value="custom">My Categories Only</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="categories-wrap">
+        <div class="category-head">
+          <div>
+            <h2>Categories / Prompts</h2>
+            <p id="promptInstruction">Think of one answer for each prompt. The letter will appear when the round starts.</p>
+          </div>
+          <button class="btn ghost" id="hideBtn">Hide Prompts</button>
+        </div>
+        <div class="categories" id="categoryGrid"></div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div class="modal-backdrop" id="editRoundModal">
+  <div class="modal">
+    <h2>Edit Current Prompts</h2>
+    <p>Write one prompt per line. You can use between 1 and 20 prompts for a round.</p>
+    <textarea id="roundPromptText"></textarea>
+    <div class="modal-actions">
+      <button class="btn ghost" id="cancelRoundEditBtn">Cancel</button>
+      <button class="btn primary" id="saveRoundEditBtn">Save Round Prompts</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="bankModal">
+  <div class="modal">
+    <h2>My Category Bank</h2>
+    <p>Add your own categories or prompts here, one per line. They are saved in this browser and can be mixed into future rounds.</p>
+    <textarea id="bankText" placeholder="Things found in space&#10;Words connected to heritage&#10;Things made of metal"></textarea>
+    <div class="modal-note">Choose “My Categories Only” in the Category Pack menu if you want rounds to use only these prompts.</div>
+    <div class="modal-actions">
+      <button class="btn ghost" id="cancelBankBtn">Cancel</button>
+      <button class="btn primary" id="saveBankBtn">Save Category Bank</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  const DEFAULT_CATEGORIES = {
+    general: [
+      "Animals","Countries","Cities","Jobs","Sports","Things in a house","Clothes","Things you can buy",
+      "Things outdoors","Things that are round","Things that are cold","Things that are hot","Things with wheels",
+      "Things you can read","Things you can watch","Things you can hear","Things you can smell","Things made of metal",
+      "Things made of wood","Things that are soft","Things that are loud","Things that are expensive","Things you can carry",
+      "Things found in a bag","Things in a kitchen","Things in a bedroom","Things in a bathroom","Things at a park",
+      "Things at a party","Things at a supermarket","Things you do every day","Things people collect","Things that use electricity"
+    ],
+    school: [
+      "School subjects","Things in a classroom","Things in a pencil case","Things a teacher says","Things students say",
+      "Words used in maths","Science words","Things in the library","Things on a school desk","Things in a school bag",
+      "Things at lunchtime","Things in the playground","Ways to learn","Things you can write with","Things you can draw",
+      "Book characters","Things you read at school","Words used in PE","Things on a computer","Classroom rules",
+      "Things you can research","Things that make a good student","Things used for art","Things on a timetable",
+      "Places in a school","Things you might forget for school","Things that are difficult to spell"
+    ],
+    world: [
+      "Countries","Capital cities","Chinese cities","Asian cities","European cities","Famous landmarks","Rivers",
+      "Mountains","Islands","Places with beaches","Things at an airport","Things at a train station","Languages",
+      "Things tourists buy","Things you pack for a trip","Ways to travel","Things on a map","Things found in a city",
+      "Things found in the countryside","Weather words","Natural features","Places you would like to visit",
+      "Foods from around the world","Famous buildings","Things associated with China","Things associated with the UK"
+    ],
+    food: [
+      "Fruit","Vegetables","Drinks","Desserts","Breakfast foods","Things in a sandwich","Things on a pizza",
+      "Chinese dishes","Foods you eat with chopsticks","Foods you eat with a spoon","Foods you can grill",
+      "Foods you can bake","Sweet foods","Salty foods","Spicy foods","Cold foods","Hot drinks","Snacks",
+      "Things in a refrigerator","Things in a restaurant","Things on a menu","Food brands","Ingredients",
+      "Foods for a party","Things you can cook at home","Foods you might eat on holiday"
+    ],
+    funny: [
+      "Bad superhero names","Excuses for being late","Things a dragon might own","Things aliens might say",
+      "Terrible birthday presents","Things you should not shout in class","Things a robot might collect",
+      "Names for a pet dinosaur","Things found under a teacher's desk","Things you should not put in a sandwich",
+      "Things a zombie might buy","Reasons to avoid homework","Things a cat might complain about",
+      "Things you would not wear to school","Funny names for a new planet","Things a giant might lose",
+      "Things you would not want in your bed","Things a pirate might say","Bad names for a school",
+      "Things a ghost might be afraid of","Things that would make a terrible school lunch",
+      "Superpowers that are not very useful","Things a talking pencil might say","Things you should not bring on a plane"
+    ]
+  };
+
+  const easyLetters = "ABCDEFGHILMNOPRSTW".split("");
+  const allLetters = "ABCDEFGHIJKLMNOPRSTUVWY".split("");
+
+  const state = {
+    round:1,
+    letter:"A",
+    letterRevealed:false,
+    categories:[],
+    customCategories:[],
+    pack:"mixed",
+    duration:180,
+    remaining:180,
+    running:false,
+    timerId:null,
+    hidden:false
+  };
+
+  const $ = id => document.getElementById(id);
+  const els = {
+    letter:$("letter"), letterBox:$("letterBox"), letterHint:$("letterHint"),
+    timer:$("timer"), roundNumber:$("roundNumber"), packLabel:$("packLabel"),
+    promptInstruction:$("promptInstruction"), categoryGrid:$("categoryGrid"),
+    startPauseBtn:$("startPauseBtn"), resetTimerBtn:$("resetTimerBtn"),
+    packSelect:$("packSelect"), timerSelect:$("timerSelect"),
+    newLetterBtn:$("newLetterBtn"), newCategoriesBtn:$("newCategoriesBtn"),
+    hideBtn:$("hideBtn"),
+    newGameBtn:$("newGameBtn"), editPromptsBtn:$("editPromptsBtn"), manageBankTopBtn:$("manageBankTopBtn"), editRoundModal:$("editRoundModal"),
+    roundPromptText:$("roundPromptText"), cancelRoundEditBtn:$("cancelRoundEditBtn"),
+    saveRoundEditBtn:$("saveRoundEditBtn"),
+    bankModal:$("bankModal"), bankText:$("bankText"), cancelBankBtn:$("cancelBankBtn"),
+    saveBankBtn:$("saveBankBtn")
+  };
+
+  function shuffle(arr){
+    const a=[...arr];
+    for(let i=a.length-1;i>0;i--){
+      const j=Math.floor(Math.random()*(i+1));
+      [a[i],a[j]]=[a[j],a[i]];
+    }
+    return a;
+  }
+
+  function chooseLetter(){
+    const pool = state.round <= 2 ? easyLetters : allLetters;
+    let next = pool[Math.floor(Math.random()*pool.length)];
+    if(pool.length>1){
+      while(next===state.letter) next=pool[Math.floor(Math.random()*pool.length)];
+    }
+    state.letter=next;
+    state.letterRevealed=false;
+  }
+
+  function categoryPool(){
+    if(state.pack==="custom"){
+      return state.customCategories.length ? [...state.customCategories] : [...DEFAULT_CATEGORIES.general];
+    }
+    if(state.pack==="mixed"){
+      return [
+        ...DEFAULT_CATEGORIES.general,
+        ...DEFAULT_CATEGORIES.school,
+        ...DEFAULT_CATEGORIES.world,
+        ...DEFAULT_CATEGORIES.food,
+        ...DEFAULT_CATEGORIES.funny,
+        ...state.customCategories
+      ];
+    }
+    return [...(DEFAULT_CATEGORIES[state.pack]||DEFAULT_CATEGORIES.general),...state.customCategories];
+  }
+
+  function chooseCategories(){
+    const pool=[...new Set(categoryPool())];
+    const target=Math.min(10,pool.length);
+    state.categories=shuffle(pool).slice(0,target);
+  }
+
+  function formatTime(sec){
+    sec=Math.max(0,Math.floor(sec));
+    return `${Math.floor(sec/60)}:${String(sec%60).padStart(2,"0")}`;
+  }
+
+  function packName(){
+    const map={
+      mixed:"Mixed categories",general:"General categories",school:"School categories",
+      world:"World & Places",food:"Food categories",funny:"Funny categories",custom:"My categories"
+    };
+    return map[state.pack]||"Categories";
+  }
+
+  function renderCategories(){
+    els.categoryGrid.innerHTML="";
+    els.categoryGrid.classList.toggle("hidden-cats",state.hidden);
+    state.categories.forEach((cat,i)=>{
+      const div=document.createElement("div");
+      div.className="category";
+      div.innerHTML=`<span class="num">${i+1}</span><span>${escapeHtml(cat)}</span>`;
+      els.categoryGrid.appendChild(div);
+    });
+    els.hideBtn.textContent=state.hidden?"Reveal Prompts":"Hide Prompts";
+  }
+
+  function render(){
+    els.letter.textContent=state.letterRevealed?state.letter:"?";
+    els.letterBox.classList.toggle("hidden-letter",!state.letterRevealed);
+    els.letterHint.textContent=state.letterRevealed?"Use this letter for every answer":"Press Start to reveal";
+    els.promptInstruction.innerHTML=state.letterRevealed
+      ? `Write one answer for each prompt beginning with <strong>${escapeHtml(state.letter)}</strong>.`
+      : "Think of one answer for each prompt. The letter will appear when the round starts.";
+    els.timer.textContent=formatTime(state.remaining);
+    els.timer.classList.toggle("warning",state.remaining<=30&&state.remaining>10);
+    els.timer.classList.toggle("danger",state.remaining<=10&&state.remaining>0);
+    els.roundNumber.textContent=`Round ${state.round}`;
+    els.packLabel.textContent=packName();
+    els.startPauseBtn.textContent=state.running?"Pause":(state.remaining===state.duration?"Start":"Resume");
+    els.packSelect.value=state.pack;
+    els.timerSelect.value=String(state.duration);
+    renderCategories();
+    save();
+  }
+
+  function setStatus(msg,type=""){ /* status display intentionally removed */ }
+
+  function startPause(){
+    if(state.running){
+      stopTimer();
+      setStatus("Timer paused. The round letter stays visible.","warn");
+      render();
+      return;
+    }
+    if(state.remaining<=0) state.remaining=state.duration;
+    if(!state.letterRevealed){
+      state.letterRevealed=true;
+      beep(760,.10);
+    }
+    state.running=true;
+    clearInterval(state.timerId);
+    state.timerId=setInterval(tick,1000);
+    setStatus(`Go! Every answer should begin with ${state.letter}.`,"good");
+    render();
+  }
+
+  function tick(){
+    if(!state.running)return;
+    state.remaining--;
+    if(state.remaining<=10&&state.remaining>0)beep(700,.05);
+    if(state.remaining<=0){
+      state.remaining=0;
+      stopTimer();
+      beep(330,.18);
+      setTimeout(()=>beep(260,.25),170);
+      setStatus("Time's up! Compare answers and score them on the whiteboard.","bad");
+    }
+    render();
+  }
+
+  function stopTimer(){
+    state.running=false;
+    if(state.timerId){
+      clearInterval(state.timerId);
+      state.timerId=null;
+    }
+  }
+
+  function resetTimer(){
+    stopTimer();
+    state.remaining=state.duration;
+    setStatus(state.letterRevealed?"Timer reset. The current letter stays visible.":"Timer reset. Letter still hidden.");
+    render();
+  }
+
+  function nextNewLetter(){
+    stopTimer();
+    chooseLetter();
+    state.remaining=state.duration;
+    state.hidden=false;
+    state.round++;
+    setStatus(`Round ${state.round} ready. A new letter has been chosen but is hidden until Start.`);
+    render();
+  }
+
+  function newCategories(){
+    chooseCategories();
+    state.hidden=false;
+    setStatus("A new prompt list has been generated.");
+    render();
+  }
+
+  function openRoundEditor(){
+    els.roundPromptText.value=state.categories.join("\n");
+    els.editRoundModal.classList.add("show");
+  }
+
+  function saveRoundEditor(){
+    const items=parseLines(els.roundPromptText.value,20);
+    if(!items.length){
+      setStatus("Keep at least one prompt in the round.","warn");
+      return;
+    }
+    state.categories=items;
+    els.editRoundModal.classList.remove("show");
+    setStatus(`Current round updated with ${items.length} prompt${items.length===1?"":"s"}.`,"good");
+    render();
+  }
+
+  function openBank(){
+    els.bankText.value=state.customCategories.join("\n");
+    els.bankModal.classList.add("show");
+  }
+
+  function saveBank(){
+    state.customCategories=parseLines(els.bankText.value,150);
+    els.bankModal.classList.remove("show");
+    if(state.pack==="custom") chooseCategories();
+    setStatus(`${state.customCategories.length} custom categor${state.customCategories.length===1?"y":"ies"} saved.`,"good");
+    render();
+  }
+
+  function parseLines(text,max){
+    const seen=new Set();
+    const out=[];
+    text.split("\n").map(x=>x.trim()).filter(Boolean).forEach(item=>{
+      const key=item.toLowerCase();
+      if(!seen.has(key)&&out.length<max){
+        seen.add(key);out.push(item);
+      }
+    });
+    return out;
+  }
+
+  function newGame(){
+    if(!confirm("Start a new game? This resets the round number and timer but keeps your custom categories."))return;
+    stopTimer();
+    state.round=1;
+    state.remaining=state.duration;
+    state.hidden=false;
+    chooseLetter();
+    chooseCategories();
+    setStatus("New game ready. The letter is hidden until you press Start.");
+    render();
+  }
+
+  function beep(freq=600,duration=.08){
+    try{
+      const AudioCtx=window.AudioContext||window.webkitAudioContext;
+      if(!AudioCtx)return;
+      const ctx=new AudioCtx();
+      const osc=ctx.createOscillator();
+      const gain=ctx.createGain();
+      osc.frequency.value=freq;
+      gain.gain.value=.08;
+      osc.connect(gain);gain.connect(ctx.destination);
+      osc.start();
+      gain.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+duration);
+      osc.stop(ctx.currentTime+duration);
+      osc.onended=()=>ctx.close();
+    }catch(e){}
+  }
+
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
+  }
+
+  function save(){
+    try{
+      localStorage.setItem("scattergories-classroom-state",JSON.stringify({
+        round:state.round,
+        letter:state.letter,
+        letterRevealed:state.letterRevealed,
+        categories:state.categories,
+        customCategories:state.customCategories,
+        pack:state.pack,
+        duration:state.duration,
+        remaining:state.remaining,
+        hidden:state.hidden
+      }));
+    }catch(e){}
+  }
+
+  function load(){
+    try{
+      const raw=localStorage.getItem("scattergories-classroom-state");
+      if(!raw)return false;
+      const s=JSON.parse(raw);
+      if(!Array.isArray(s.categories)||!s.categories.length)return false;
+      state.round=Number(s.round)||1;
+      state.letter=typeof s.letter==="string"?s.letter:"A";
+      state.letterRevealed=Boolean(s.letterRevealed);
+      state.categories=s.categories.slice(0,20);
+      state.customCategories=Array.isArray(s.customCategories)?s.customCategories.slice(0,150):[];
+      state.pack=s.pack||"mixed";
+      state.duration=Number(s.duration)||180;
+      state.remaining=Math.max(0,Number(s.remaining));
+      state.hidden=Boolean(s.hidden);
+      state.running=false;
+      state.timerId=null;
+      return true;
+    }catch(e){return false}
+  }
+
+  els.startPauseBtn.addEventListener("click",startPause);
+  els.resetTimerBtn.addEventListener("click",resetTimer);
+  els.newLetterBtn.addEventListener("click",nextNewLetter);
+  els.newCategoriesBtn.addEventListener("click",newCategories);
+
+  els.packSelect.addEventListener("change",()=>{
+    state.pack=els.packSelect.value;
+    chooseCategories();
+    state.hidden=false;
+    setStatus(`${packName()} selected and a fresh prompt list was generated.`);
+    render();
+  });
+
+  els.timerSelect.addEventListener("change",()=>{
+    stopTimer();
+    state.duration=Number(els.timerSelect.value)||180;
+    state.remaining=state.duration;
+    setStatus("Round time changed.");
+    render();
+  });
+
+  els.hideBtn.addEventListener("click",()=>{
+    state.hidden=!state.hidden;
+    renderCategories();save();
+  });
+
+  els.editPromptsBtn.addEventListener("click",openRoundEditor);
+  els.cancelRoundEditBtn.addEventListener("click",()=>els.editRoundModal.classList.remove("show"));
+  els.saveRoundEditBtn.addEventListener("click",saveRoundEditor);
+
+  els.manageBankTopBtn.addEventListener("click",openBank);
+  els.cancelBankBtn.addEventListener("click",()=>els.bankModal.classList.remove("show"));
+  els.saveBankBtn.addEventListener("click",saveBank);
+  els.newGameBtn.addEventListener("click",newGame);
+
+  [els.editRoundModal,els.bankModal].forEach(modal=>{
+    modal.addEventListener("click",e=>{
+      if(e.target===modal)modal.classList.remove("show");
+    });
+  });
+
+  document.addEventListener("keydown",e=>{
+    const tag=document.activeElement?.tagName;
+    if(tag==="INPUT"||tag==="TEXTAREA"||tag==="SELECT")return;
+    if(e.code==="Space"){e.preventDefault();startPause()}
+  });
+
+  if(!load()){
+    chooseLetter();
+    chooseCategories();
+  }
+  state.running=false;
+  state.timerId=null;
+  render();
+})();
+</script>
+</body>
+</html>
+
+<style>
+#categoryGrid .category:nth-child(even){
+  border-top-right-radius:0;
+  border-bottom-right-radius:0;
+}
+@media(max-width:760px){
+  .game-card{padding-right:10px;}
+  #categoryGrid .category:nth-child(even){
+    border-top-right-radius:16px;
+    border-bottom-right-radius:16px;
+  }
+}
+</style>

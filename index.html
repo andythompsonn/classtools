@@ -124,11 +124,12 @@
       ← Back to Main
     </button>
 
-    <div class="main-hero">
-      <h1 data-i18n-en="Games">Games</h1>
-      <p data-i18n-en="Classroom games and activities can be added here.">
-        Classroom games and activities can be added here.
-      </p>
+    <div class="main-hero games-library-hero">
+      <div class="games-library-heading">
+        <div><span class="games-library-kicker">CLASSROOM ARCADE</span><h1 data-i18n-en="Games">Choose a game</h1>
+        <p data-i18n-en="Classroom games and activities can be added here.">Pin your favourites, arrange the cards, and launch a classroom activity.</p></div>
+        <div class="games-library-decoration" aria-hidden="true"><span>★</span><span>🎮</span><span>✦</span></div>
+      </div>
 
       <div class="games-finder task-search-wrap" role="search">
         <input class="task-search-input" id="gameSearchInput" type="search" placeholder="Search for a game..." autocomplete="off" aria-label="Search games">
@@ -139,6 +140,14 @@
         </div>
       </div>
       <p class="games-search-empty" id="gamesSearchEmpty" hidden>No games match that search.</p>
+
+      <section class="games-favourites" id="gamesFavouritesSection" aria-labelledby="gamesFavouritesTitle">
+        <div class="games-section-heading"><div><span class="games-section-icon" aria-hidden="true">★</span><div><h2 id="gamesFavouritesTitle">Favourite games</h2><p>Press a star or drag games here for quick access.</p></div></div><span class="games-favourite-count" id="gamesFavouriteCount">0 pinned</span></div>
+        <div class="games-favourite-empty" id="gamesFavouriteEmpty"><strong>Drop favourite games here</strong><span>Your pinned games will stay at the top.</span></div>
+        <div class="main-app-grid games-grid games-favourites-grid" id="gamesFavouritesGrid"></div>
+      </section>
+
+      <div class="games-section-heading games-all-heading"><div><span class="games-section-icon games-all-icon" aria-hidden="true">▦</span><div><h2>All games</h2><p>Drag cards to rearrange them.</p></div></div></div>
 
       <div class="main-app-grid games-grid" id="gamesGrid">
         <button class="main-app-card" data-game-card data-game-search="wordle word spelling letters" id="openWordlePageBtn" type="button">
@@ -191,6 +200,24 @@
           <span class="main-app-card-icon" aria-hidden="true">🔎</span>
           <strong>Word Search</strong>
           <span>Find the hidden words in the letter grid.</span>
+        </a>
+
+        <a class="main-app-card" data-game-card data-game-search="classroom codenames teams clues vocabulary words" href="games/classroom-codenames.html">
+          <span class="main-app-card-icon" aria-hidden="true">🕵️</span>
+          <strong>Classroom Codenames</strong>
+          <span>Give clues and help your team uncover its words before the other team.</span>
+        </a>
+
+        <a class="main-app-card" data-game-card data-game-search="sentence stretch microphone speaking grammar language" href="games/sentence-stretch-mic-game.html">
+          <span class="main-app-card-icon" aria-hidden="true">🎙️</span>
+          <strong>Sentence Stretch</strong>
+          <span>Build longer, richer sentences with speaking and classroom prompts.</span>
+        </a>
+
+        <a class="main-app-card" data-game-card data-game-search="vocab vocabulary four in a row connect teams words" href="games/vocab-four-in-a-row.html">
+          <span class="main-app-card-icon" aria-hidden="true">🔴</span>
+          <strong>Vocab Four in a Row</strong>
+          <span>Answer vocabulary prompts and connect four spaces before the other team.</span>
         </a>
       </div>
     </div>
@@ -265,9 +292,9 @@
 
   <section class="wordle-page" id="wordlePage" hidden>
     <header class="game-nav-topbar">
-      <div class="game-nav-brand">
+      <a class="game-nav-brand game-home-brand" href="#games" aria-label="Back to Games">
         <div><h1>Wordle</h1><div class="game-nav-subtitle">Guess the five-letter word</div></div>
-      </div>
+      </a>
       <div class="top-actions">
         <button id="wordleNewGameBtn" type="button" data-i18n-en="New Word">New Word</button>
         <button id="wordleRevealBtn" type="button" data-i18n-en="Reveal Word">Reveal Word</button>

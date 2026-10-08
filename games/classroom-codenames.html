@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Classroom Codenames</title>
+<link rel="stylesheet" href="game-nav.css">
 <style>
 :root{
   --bg1:#15172b;
@@ -305,6 +306,9 @@ button{cursor:pointer}
   -webkit-user-select:none;
   touch-action:none;
 }
+.top-actions .spy-btn{background:rgba(239,81,104,.15);border-color:rgba(239,81,104,.34)}
+.simple-controls{grid-template-columns:1fr}
+.end-turn-btn{min-height:48px;padding:12px 20px;font-size:15px;letter-spacing:.01em;background:linear-gradient(135deg,#6868ff,#8b54ff);border-color:transparent;box-shadow:0 8px 18px rgba(104,104,255,.24)}
 .banner{
   display:none;
   flex:0 0 auto;
@@ -418,7 +422,7 @@ button{cursor:pointer}
 }
 </style>
 </head>
-<body>
+<body data-game-title="Classroom Codenames" data-game-subtitle="Clues, teams, and hidden words" data-game-icon="🕵️">
 <div class="app">
   <header class="topbar">
     <div class="brand">
@@ -430,6 +434,8 @@ button{cursor:pointer}
     </div>
     <div class="top-actions">
       <button id="keysBtn" class="glass-btn">🖨️ Leader Keys PDF</button>
+      <button id="spyBtn" class="glass-btn spy-btn"
+        title="Press and hold to reveal the key">👁 Hold for key</button>
       <button id="setupBtn" class="glass-btn">⚙️ Setup</button>
       <button id="newGameBtn" class="glass-btn">↻ New Game</button>
       <div id="layoutBadge" class="layout-badge">Layout #--</div>
@@ -465,8 +471,6 @@ button{cursor:pointer}
 
       <div class="controls simple-controls">
         <button id="endTurnBtn" class="action end-turn-btn">End Turn →</button>
-        <button id="spyBtn" class="action danger spy-btn"
-          title="Press and hold to reveal the key">👁 Hold for key</button>
       </div>
 
       <div id="banner" class="banner"></div>
@@ -820,6 +824,12 @@ mountain</textarea>
   $("newGameBtn").addEventListener("click", startGame);
 
   $("playAgainBtn").addEventListener("click", startGame);
+  window.addEventListener("game-nav:import-list", event => {
+    const imported = Array.isArray(event.detail?.words) ? event.detail.words.map(String).map(value => value.trim()).filter(Boolean) : [];
+    if (!imported.length) return;
+    $("wordInput").value = imported.join("\n");
+    $("setupModal").classList.add("show");
+  });
   $("endSetupBtn").addEventListener("click", () => {
     $("endOverlay").classList.remove("show");
     $("setupModal").classList.add("show");
@@ -842,5 +852,6 @@ mountain</textarea>
   render();
 })();
 </script>
+<script src="game-nav.js"></script>
 </body>
 </html>

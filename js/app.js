@@ -288,6 +288,10 @@
   const gameSearchInput = document.getElementById("gameSearchInput");
   const clearGameSearchBtn = document.getElementById("clearGameSearchBtn");
   const gamesGrid = document.getElementById("gamesGrid");
+  const gamesFavouritesSection = document.getElementById("gamesFavouritesSection");
+  const gamesFavouritesGrid = document.getElementById("gamesFavouritesGrid");
+  const gamesFavouriteEmpty = document.getElementById("gamesFavouriteEmpty");
+  const gamesFavouriteCount = document.getElementById("gamesFavouriteCount");
   const gamesSearchEmpty = document.getElementById("gamesSearchEmpty");
   const gamesGridViewBtn = document.getElementById("gamesGridViewBtn");
   const gamesListViewBtn = document.getElementById("gamesListViewBtn");
@@ -8972,12 +8976,156 @@
   openSpinWheelPageBtn.addEventListener("click", () => { window.location.href = "games/spin-wheel.html"; });
   openSharkWordPageBtn.addEventListener("click", () => { window.location.href = "games/shark-word-quest.html"; });
   openHotseatPageBtn.addEventListener("click", () => { window.location.href = "games/hotseat.html"; });
+
+  const GAMES_LAYOUT_STORAGE_KEY = "y5a_games_layout_v1";
+  let draggedGameShell = null;
+
+  function readGamesLayout(){
+    try {
+      const saved = JSON.parse(localStorage.getItem(GAMES_LAYOUT_STORAGE_KEY) || "{}");
+      return {
+        favourites: Array.isArray(saved.favourites) ? saved.favourites : [],
+        games: Array.isArray(saved.games) ? saved.games : []
+      };
+    } catch (_error){
+      return { favourites: [], games: [] };
+    }
+  }
+
+  function saveGamesLayout(){
+    const gameIds = container => [...container.querySelectorAll(":scope > .game-card-shell")].map(shell => shell.dataset.gameId);
+    localStorage.setItem(GAMES_LAYOUT_STORAGE_KEY, JSON.stringify({
+      favourites: gameIds(gamesFavouritesGrid),
+      games: gameIds(gamesGrid)
+    }));
+  }
+
+  function refreshGamesLibrary(){
+    const favouriteShells = [...gamesFavouritesGrid.querySelectorAll(":scope > .game-card-shell")];
+    gamesFavouritesSection.classList.toggle("is-empty", favouriteShells.length === 0);
+    gamesFavouriteEmpty.hidden = favouriteShells.length !== 0;
+    gamesFavouriteCount.textContent = `${favouriteShells.length} pinned`;
+
+    document.querySelectorAll("#gamesPage .game-card-shell").forEach(shell => {
+      const isFavourite = shell.parentElement === gamesFavouritesGrid;
+      const button = shell.querySelector(".game-favourite-btn");
+      button.classList.toggle("is-favourite", isFavourite);
+      button.setAttribute("aria-pressed", String(isFavourite));
+      button.setAttribute("aria-label", isFavourite ? "Remove from favourites" : "Add to favourites");
+      button.title = isFavourite ? "Remove from favourites" : "Add to favourites";
+    });
+  }
+
+  function moveGameShell(shell, destination){
+    destination.append(shell);
+    refreshGamesLibrary();
+    saveGamesLayout();
+    filterGames();
+  }
+
+  function makeGameCardsDraggable(){
+    const cards = [...gamesGrid.querySelectorAll(":scope > [data-game-card]")];
+    const savedLayout = readGamesLayout();
+    const shellsById = new Map();
+
+    cards.forEach((card, index) => {
+      const gameId = card.id || card.getAttribute("href") || `game-${index + 1}`;
+      const shell = document.createElement("div");
+      shell.className = "game-card-shell";
+      shell.dataset.gameId = gameId;
+      shell.draggable = true;
+      card.before(shell);
+      shell.append(card);
+      card.draggable = false;
+
+      const favouriteButton = document.createElement("button");
+      favouriteButton.className = "game-favourite-btn";
+      favouriteButton.type = "button";
+      favouriteButton.innerHTML = '<span aria-hidden="true">★</span>';
+      favouriteButton.addEventListener("click", event => {
+        event.preventDefault();
+        event.stopPropagation();
+        moveGameShell(shell, shell.parentElement === gamesFavouritesGrid ? gamesGrid : gamesFavouritesGrid);
+      });
+      shell.append(favouriteButton);
+
+      shell.addEventListener("dragstart", event => {
+        draggedGameShell = shell;
+        shell.classList.add("dragging");
+        event.dataTransfer.effectAllowed = "move";
+        event.dataTransfer.setData("text/plain", gameId);
+      });
+      shell.addEventListener("dragend", () => {
+        shell.classList.remove("dragging");
+        draggedGameShell = null;
+        gamesGrid.classList.remove("drag-over");
+        gamesFavouritesSection.classList.remove("drag-over");
+        refreshGamesLibrary();
+        saveGamesLayout();
+      });
+      shellsById.set(gameId, shell);
+    });
+
+    const placed = new Set();
+    savedLayout.favourites.forEach(id => {
+      const shell = shellsById.get(id);
+      if (!shell) return;
+      gamesFavouritesGrid.append(shell);
+      placed.add(id);
+    });
+    savedLayout.games.forEach(id => {
+      const shell = shellsById.get(id);
+      if (!shell || placed.has(id)) return;
+      gamesGrid.append(shell);
+      placed.add(id);
+    });
+    shellsById.forEach((shell, id) => {
+      if (!placed.has(id)) gamesGrid.append(shell);
+    });
+
+    refreshGamesLibrary();
+  }
+
+  function gameDropTarget(container, event){
+    const targetShell = event.target.closest(".game-card-shell");
+    if (!targetShell || targetShell === draggedGameShell || targetShell.parentElement !== container){
+      if (event.target === container || !container.contains(event.target)) container.append(draggedGameShell);
+      return;
+    }
+    const bounds = targetShell.getBoundingClientRect();
+    const afterTarget = event.clientY > bounds.top + bounds.height / 2 ||
+      (Math.abs(event.clientY - (bounds.top + bounds.height / 2)) < bounds.height / 3 && event.clientX > bounds.left + bounds.width / 2);
+    container.insertBefore(draggedGameShell, afterTarget ? targetShell.nextSibling : targetShell);
+  }
+
+  function enableGameDropZone(zone, container){
+    zone.addEventListener("dragover", event => {
+      if (!draggedGameShell) return;
+      event.preventDefault();
+      event.dataTransfer.dropEffect = "move";
+      zone.classList.add("drag-over");
+      gameDropTarget(container, event);
+    });
+    zone.addEventListener("dragleave", event => {
+      if (!zone.contains(event.relatedTarget)) zone.classList.remove("drag-over");
+    });
+    zone.addEventListener("drop", event => {
+      if (!draggedGameShell) return;
+      event.preventDefault();
+      zone.classList.remove("drag-over");
+      gameDropTarget(container, event);
+      refreshGamesLibrary();
+      saveGamesLayout();
+      filterGames();
+    });
+  }
+
   function filterGames(){
     const query = gameSearchInput.value.trim().toLocaleLowerCase();
     let visible = 0;
-    gamesGrid.querySelectorAll("[data-game-card]").forEach(card => {
+    document.querySelectorAll("#gamesPage [data-game-card]").forEach(card => {
       const matches = !query || card.dataset.gameSearch.includes(query);
-      card.hidden = !matches;
+      card.closest(".game-card-shell").hidden = !matches;
       if (matches) visible += 1;
     });
     gamesSearchEmpty.hidden = visible !== 0;
@@ -8985,11 +9133,15 @@
   function setGamesView(view){
     const isList = view === "list";
     gamesGrid.classList.toggle("list-view", isList);
+    gamesFavouritesGrid.classList.toggle("list-view", isList);
     gamesGridViewBtn.classList.toggle("is-active", !isList);
     gamesListViewBtn.classList.toggle("is-active", isList);
     gamesGridViewBtn.setAttribute("aria-pressed", String(!isList));
     gamesListViewBtn.setAttribute("aria-pressed", String(isList));
   }
+  makeGameCardsDraggable();
+  enableGameDropZone(gamesGrid, gamesGrid);
+  enableGameDropZone(gamesFavouritesSection, gamesFavouritesGrid);
   gameSearchInput.addEventListener("input", filterGames);
   clearGameSearchBtn.addEventListener("click", () => {
     gameSearchInput.value = "";
@@ -9040,6 +9192,26 @@
   hotseatRestartBtn.addEventListener("click", () => renderHotseatGroups());
   hotseatShowDefinition.addEventListener("change", renderHotseatCard);
   hotseatShowSentence.addEventListener("change", renderHotseatCard);
+
+  window.addEventListener("game-nav:import-list", event => {
+    const imported = Array.isArray(event.detail?.words) ? event.detail.words.map(String).map(value => value.trim()).filter(Boolean) : [];
+    if (!imported.length) return;
+    const route = window.location.hash.slice(1);
+    if (route === "wordle") {
+      const fiveLetterWords = imported.map(value => value.toUpperCase().replace(/[^A-Z]/g, "")).filter(value => value.length === 5);
+      if (!fiveLetterWords.length) { setWordleMessage("Wordle needs at least one five-letter word.", "warning"); return; }
+      WORDLE_WORDS.splice(0, WORDLE_WORDS.length, ...new Set(fiveLetterWords)); startWordleGame();
+    } else if (route === "spin-wheel") {
+      wheelItems = [...new Set(imported)]; saveWheelItems(); renderSpinWheel();
+      spinWheelResult.textContent = `${wheelItems.length} items imported.`;
+    } else if (route === "shark-word-quest") {
+      sharkWordSourceWords = [...new Set(imported.map(value => value.toUpperCase().replace(/[^A-Z ]/g, "")).filter(Boolean))];
+      profileSet(SHARK_WORD_SOURCE_KEY, JSON.stringify(sharkWordSourceWords)); startSharkWordGame();
+    } else if (route === "hotseat") {
+      hotseatEntries = shuffleEntries(imported.map(value => ({word:value, definition:"", sentence:""})));
+      hotseatIndex = 0; hotseatSetup.hidden = true; hotseatCard.hidden = false; renderHotseatCard();
+    }
+  });
 
   addWheelEntriesBtn.addEventListener("click", addWheelEntries);
   importRosterToWheelBtn.addEventListener("click", importRosterToWheel);

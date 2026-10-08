@@ -106,7 +106,7 @@
   .stage{height:calc(100vh - 64px);min-height:0;padding:10px 16px}.game-card{height:100%;min-height:0;border-radius:26px}.status-row{padding:14px 20px 6px}.word-zone{padding:16px 36px}.word{font-size:clamp(44px,8vw,110px)}.helper{margin-top:14px;font-size:clamp(14px,1.5vw,19px)}.controls{padding:6px 18px 16px}.control{min-height:46px;font-size:16px;padding:0 20px}
 </style>
 </head>
-<body>
+<body data-game-title="Hotseat" data-game-subtitle="Describe the word without saying it" data-game-icon="🔥">
 <div class="app">
   <div class="topbar">
     <div class="brand">
@@ -281,6 +281,13 @@
     if(e.key==='ArrowRight' || e.key===' '){ e.preventDefault(); nextBtn.click(); }
     if(e.key==='ArrowLeft'){ e.preventDefault(); prevBtn.click(); }
     if(e.key.toLowerCase()==='h'){ hideBtn.click(); }
+  });
+
+  window.addEventListener('game-nav:import-list', event => {
+    const imported = Array.isArray(event.detail?.words) ? event.detail.words.map(String).map(value => value.trim()).filter(Boolean).slice(0,100) : [];
+    if(!imported.length) return;
+    words = imported; index = 0; hidden = false; wordInput.value = words.join('\n');
+    closeSetup(); render(); showToast(`${words.length} items imported`);
   });
 
   render();

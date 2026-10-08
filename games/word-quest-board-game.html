@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+<title>Word Quest Board Game</title>
+<style>
+:root{--bg:#0b1020;--panel:#121a30;--panel2:#18223f;--line:rgba(255,255,255,.10);--text:#f7f9ff;--muted:#9eabc7;--purple:#756cff;--blue:#4f8cff;--red:#ff617a;--green:#48c99f;--yellow:#f6c858;--orange:#ff9a56;--pink:#c86cff;--shadow:0 18px 50px rgba(0,0,0,.28)}
+*{box-sizing:border-box}html,body{width:100%;height:100%;margin:0;overflow:hidden}
+body{font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:var(--text);background:radial-gradient(circle at 15% 18%,rgba(117,108,255,.14),transparent 28%),radial-gradient(circle at 88% 82%,rgba(72,201,159,.09),transparent 30%),var(--bg)}
+button,input,select,textarea{font:inherit}button{user-select:none;-webkit-user-select:none}
+.app{width:100vw;height:100vh;height:100dvh;display:grid;grid-template-rows:auto minmax(0,1fr);gap:9px;padding:9px;overflow:hidden}
+.card{background:linear-gradient(180deg,rgba(255,255,255,.048),rgba(255,255,255,.026));border:1px solid var(--line);border-radius:22px;box-shadow:var(--shadow);backdrop-filter:blur(12px)}
+.banner{min-height:56px;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 12px}
+.brand{display:flex;align-items:center;gap:11px;font-size:clamp(22px,2.2vw,34px);font-weight:1000;letter-spacing:-.045em;white-space:nowrap}
+.mark{width:42px;height:42px;border-radius:13px;display:grid;place-items:center;background:linear-gradient(135deg,var(--purple),#9d73ff);font-size:22px;font-weight:1000;box-shadow:0 8px 22px rgba(117,108,255,.25)}
+.banner-actions{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap}
+.btn{border:1px solid rgba(255,255,255,.09);border-radius:13px;padding:9px 12px;background:var(--panel2);color:var(--text);font-weight:900;cursor:pointer;transition:.15s ease}
+.btn:hover{transform:translateY(-1px);background:#202d50}.btn:active{transform:none}.btn.primary{background:linear-gradient(135deg,#8177ff,#6258e9)}.btn.good{background:linear-gradient(135deg,#5be0a5,#2ec28a);color:#06160f}.btn.danger{background:linear-gradient(135deg,#ff7187,#e84d66)}.btn.ghost{background:rgba(255,255,255,.045)}.btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.game{min-width:0;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:9px}
+.board-shell{min-width:0;min-height:0;padding:10px;overflow:hidden}
+.board{width:100%;height:100%;min-width:0;min-height:0;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));grid-template-rows:repeat(6,minmax(0,1fr));gap:7px}
+.space{min-width:0;min-height:0;position:relative;border-radius:15px;padding:7px;display:flex;flex-direction:column;justify-content:space-between;border:1px solid rgba(255,255,255,.11);overflow:hidden}
+.space.start{background:linear-gradient(145deg,#4f8cff,#346fd8)}.space.definition{background:linear-gradient(145deg,#5e55d6,#453bb2)}.space.sentence{background:linear-gradient(145deg,#2f9b7c,#22785f)}.space.bonus{background:linear-gradient(145deg,#d49b38,#ac7620)}.space.challenge{background:linear-gradient(145deg,#ce566b,#a6374d)}.space.double{background:linear-gradient(145deg,#9b57ce,#773da8)}
+.space-icon{font-size:clamp(17px,2vw,28px);line-height:1}.space-title{font-size:clamp(9px,.82vw,13px);font-weight:1000;text-transform:uppercase;letter-spacing:.06em;line-height:1.05}.space-num{position:absolute;top:5px;right:7px;font-size:9px;font-weight:900;opacity:.55}
+.tokens{display:flex;flex-wrap:wrap;gap:3px;align-items:center;min-height:19px}.token{width:18px;height:18px;border-radius:50%;border:2px solid rgba(255,255,255,.92);box-shadow:0 2px 5px rgba(0,0,0,.25);flex:0 0 auto}
+.center{grid-column:2 / 6;grid-row:2 / 6;min-width:0;min-height:0;display:flex;flex-direction:column;align-items:stretch;justify-content:center;gap:10px;border-radius:22px;border:1px solid var(--line);background:radial-gradient(circle at 50% 15%,rgba(255,255,255,.07),transparent 30%),#10172b;padding:16px;overflow:hidden}
+.center-top{display:flex;align-items:center;justify-content:space-between;gap:10px}.turn{min-width:0}.turn-label{color:var(--muted);text-transform:uppercase;letter-spacing:.12em;font-size:10px;font-weight:1000}.turn-name{font-size:clamp(20px,2.4vw,34px);font-weight:1000;letter-spacing:-.03em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.timer-box{min-width:112px;text-align:center;padding:8px 10px;border:1px solid var(--line);border-radius:14px;background:#0b1224}.timer-label{color:var(--muted);font-size:9px;font-weight:1000;letter-spacing:.1em;text-transform:uppercase}.timer{font-size:26px;font-weight:1000;font-variant-numeric:tabular-nums}.timer.warning{color:#ffd166}.timer.danger{color:#ff8193}
+.dice-area{display:grid;grid-template-columns:120px minmax(0,1fr);gap:10px;align-items:stretch}.die{border:1px solid rgba(255,255,255,.13);border-radius:20px;background:linear-gradient(145deg,#f6f8ff,#dfe5f3);color:#111827;display:grid;place-items:center;font-size:66px;min-height:112px;font-weight:1000;box-shadow:inset 0 -5px 0 rgba(0,0,0,.09)}
+.card-area{min-width:0;min-height:112px;border:1px solid var(--line);border-radius:18px;background:rgba(255,255,255,.045);display:flex;align-items:center;justify-content:center;padding:13px;text-align:center;overflow:hidden}.card-content{width:100%;min-width:0}.card-type{color:var(--muted);text-transform:uppercase;letter-spacing:.12em;font-size:10px;font-weight:1000;margin-bottom:6px}.card-main{font-size:clamp(18px,2vw,30px);line-height:1.17;font-weight:1000;overflow-wrap:anywhere}.card-answer{margin-top:6px;color:#cbd4ea;font-size:clamp(13px,1.25vw,18px);font-weight:800}.card-answer.hidden{visibility:hidden}
+.center-actions{display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:8px}.center-actions .btn{min-height:48px;font-size:14px}.answer-actions{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}.answer-actions .btn{min-height:44px}
+.sidebar{min-width:0;min-height:0;overflow:hidden;padding:10px;display:flex;flex-direction:column;gap:9px}.sidebar-head{display:flex;align-items:center;justify-content:space-between;gap:8px}.sidebar-title{font-size:18px;font-weight:1000}.teams{min-height:0;display:flex;flex-direction:column;gap:7px;overflow:auto}
+.team{display:grid;grid-template-columns:18px minmax(0,1fr) auto;gap:8px;align-items:center;border:1px solid var(--line);border-radius:14px;padding:8px 9px;background:rgba(255,255,255,.04)}.team.active{background:rgba(255,255,255,.075);box-shadow:inset 0 0 0 1px rgba(255,255,255,.15)}
+.team-dot{width:16px;height:16px;border-radius:50%;border:2px solid rgba(255,255,255,.9)}.team-name{min-width:0;width:100%;border:0;outline:none;background:transparent;color:var(--text);font-size:14px;font-weight:950}.team-score{font-size:22px;font-weight:1000;min-width:30px;text-align:right}
+.settings{display:grid;grid-template-columns:1fr 1fr;gap:7px;border-top:1px solid var(--line);padding-top:9px}.setting{min-width:0}.setting label{display:block;color:var(--muted);font-size:9px;font-weight:1000;text-transform:uppercase;letter-spacing:.1em;margin:0 0 5px 2px}.setting select{width:100%;height:38px;min-width:0;border:1px solid rgba(255,255,255,.12);border-radius:10px;background:#0d1428;color:var(--text);padding:0 8px;font-size:12px;font-weight:900}
+.legend{display:grid;grid-template-columns:1fr 1fr;gap:5px}.legend-item{display:flex;align-items:center;gap:6px;color:#cbd3e6;font-size:10px;font-weight:800}.legend-swatch{width:12px;height:12px;border-radius:4px;flex:0 0 auto}
+.rules{margin-top:auto;border:1px solid rgba(117,108,255,.17);background:rgba(117,108,255,.075);border-radius:14px;padding:9px 10px;color:#cbd3e6;font-size:10px;line-height:1.4;font-weight:700}.rules strong{display:block;color:var(--text);font-size:11px;margin-bottom:3px}
+.modal-backdrop{position:fixed;inset:0;z-index:30;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(3,6,15,.79)}.modal-backdrop.show{display:flex}.modal{width:min(760px,96vw);max-height:90vh;overflow:auto;border:1px solid var(--line);border-radius:24px;background:#11182d;box-shadow:0 30px 90px rgba(0,0,0,.55);padding:22px}.modal h2{margin:0 0 8px;font-size:30px}.modal p{color:#c5cee0;line-height:1.5}.modal textarea{width:100%;min-height:360px;resize:vertical;border:1px solid var(--line);border-radius:14px;background:#0c1326;color:var(--text);padding:12px;font-size:15px;line-height:1.5}.format{border-radius:12px;padding:10px 12px;background:rgba(255,255,255,.045);color:#cbd3e6;font-size:12px;line-height:1.45}.modal-actions{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap;margin-top:14px}
+.winner{text-align:center}.winner-small{color:var(--muted);text-transform:uppercase;font-size:11px;letter-spacing:.13em;font-weight:1000}.winner-big{margin-top:12px;font-size:clamp(42px,6vw,76px);font-weight:1000;letter-spacing:-.045em}.winner-sub{margin-top:8px;color:#cbd3e6;font-size:18px;font-weight:800}
+@media(max-height:760px) and (min-width:901px){.app{padding:6px;gap:6px}.banner{min-height:48px;padding:5px 9px}.mark{width:36px;height:36px}.brand{font-size:23px}.banner-actions .btn{padding:7px 9px;font-size:11px}.game{grid-template-columns:minmax(0,1fr) 270px;gap:6px}.board-shell{padding:6px}.board{gap:5px}.space{padding:5px;border-radius:11px}.space-icon{font-size:18px}.space-title{font-size:9px}.center{padding:10px;gap:7px}.turn-name{font-size:23px}.timer-box{padding:5px 8px}.timer{font-size:21px}.dice-area{grid-template-columns:96px 1fr;gap:7px}.die{min-height:86px;font-size:52px;border-radius:15px}.card-area{min-height:86px;padding:8px}.card-main{font-size:18px}.center-actions .btn{min-height:38px;padding:6px;font-size:12px}.answer-actions .btn{min-height:36px;padding:6px;font-size:11px}.sidebar{padding:7px;gap:6px}.team{padding:6px 7px}.team-score{font-size:18px}.rules{font-size:9px;padding:6px 8px}}
+@media(max-width:900px){html,body{overflow:auto}.app{width:100%;height:auto;min-height:100%;overflow:visible}.game{grid-template-columns:1fr}.board-shell{min-height:760px}.sidebar{overflow:visible}}
+</style>
+</head>
+<body>
+<div class="app">
+<header class="card banner">
+  <div class="brand"><div class="mark">W</div>Word Quest</div>
+  <div class="banner-actions">
+    <button class="btn ghost" id="editWordsBtn">Edit Vocabulary</button>
+    <button class="btn ghost" id="resetBoardBtn">Reset Board</button>
+    <button class="btn danger" id="newGameBtn">New Game</button>
+  </div>
+</header>
+
+<main class="game">
+<section class="card board-shell">
+<div class="board" id="board">
+  <div class="center">
+    <div class="center-top">
+      <div class="turn"><div class="turn-label">Current Turn</div><div class="turn-name" id="turnName">Blue Team</div></div>
+      <div class="timer-box"><div class="timer-label">Game Time</div><div class="timer" id="timer">15:00</div></div>
+    </div>
+    <div class="dice-area">
+      <div class="die" id="die">⚄</div>
+      <div class="card-area">
+        <div class="card-content">
+          <div class="card-type" id="cardType">Ready to play</div>
+          <div class="card-main" id="cardMain">Roll the dice to begin.</div>
+          <div class="card-answer hidden" id="cardAnswer">Answer</div>
+        </div>
+      </div>
+    </div>
+    <div class="center-actions">
+      <button class="btn primary" id="rollBtn">🎲 Roll Dice</button>
+      <button class="btn ghost" id="revealBtn">Reveal Answer</button>
+      <button class="btn ghost" id="endGameBtn">End Game</button>
+    </div>
+    <div class="answer-actions">
+      <button class="btn good" id="correctBtn">✓ Correct</button>
+      <button class="btn danger" id="incorrectBtn">✕ Incorrect</button>
+      <button class="btn ghost" id="nextTurnBtn">Next Turn</button>
+    </div>
+  </div>
+</div>
+</section>
+
+<aside class="card sidebar">
+  <div class="sidebar-head"><div class="sidebar-title">Teams</div><button class="btn ghost" id="addTeamBtn">+ Team</button></div>
+  <div class="teams" id="teams"></div>
+  <div class="settings">
+    <div class="setting"><label for="gameTimeSelect">Game Length</label><select id="gameTimeSelect"><option value="600">10 min</option><option value="900" selected>15 min</option><option value="1200">20 min</option></select></div>
+    <div class="setting"><label for="targetSelect">Win Target</label><select id="targetSelect"><option value="6">6 points</option><option value="8" selected>8 points</option><option value="10">10 points</option><option value="12">12 points</option></select></div>
+  </div>
+  <div class="legend">
+    <div class="legend-item"><span class="legend-swatch" style="background:#5e55d6"></span>Definition +1</div>
+    <div class="legend-item"><span class="legend-swatch" style="background:#2f9b7c"></span>Sentence +1</div>
+    <div class="legend-item"><span class="legend-swatch" style="background:#d49b38"></span>Bonus +1</div>
+    <div class="legend-item"><span class="legend-swatch" style="background:#ce566b"></span>Challenge +2</div>
+    <div class="legend-item"><span class="legend-swatch" style="background:#9b57ce"></span>Double +2</div>
+    <div class="legend-item"><span class="legend-swatch" style="background:#4f8cff"></span>START / +1 lap</div>
+  </div>
+  <div class="rules"><strong>Fast rules</strong>Roll → move → answer the card. Definition: guess the word. Sentence: use the word correctly. Challenge/Double are worth 2 points. Passing START gives +1. First to the target score wins, or highest score when the timer ends.</div>
+</aside>
+</main>
+</div>
+
+<div class="modal-backdrop" id="wordsModal">
+  <div class="modal">
+    <h2>Edit Vocabulary</h2>
+    <p>Add one vocabulary item per line using this format:</p>
+    <div class="format"><strong>word | definition</strong><br>Example: pioneer | a person who is among the first to explore or develop something</div>
+    <textarea id="wordsText"></textarea>
+    <div class="modal-actions"><button class="btn ghost" id="cancelWordsBtn">Cancel</button><button class="btn primary" id="saveWordsBtn">Save Vocabulary</button></div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="winnerModal">
+  <div class="modal">
+    <div class="winner">
+      <div class="winner-small">Game Over</div>
+      <div class="winner-big" id="winnerTitle">Blue Team wins!</div>
+      <div class="winner-sub" id="winnerSub"></div>
+    </div>
+    <div class="modal-actions" style="justify-content:center;margin-top:22px"><button class="btn ghost" id="closeWinnerBtn">View Board</button><button class="btn primary" id="playAgainBtn">Play Again</button></div>
+  </div>
+</div>
+
+<script>
+(() => {
+const TEAM_COLORS=["#4f8cff","#ff617a","#48c99f","#f6c858","#c86cff","#ff9a56"];
+const SPACE_LAYOUT=[[5,0],[4,0],[3,0],[2,0],[1,0],[0,0],[0,1],[0,2],[0,3],[0,4],[0,5],[1,5],[2,5],[3,5],[4,5],[5,5],[5,4],[5,3],[5,2],[5,1]];
+const SPACE_TYPES=["start","definition","sentence","bonus","definition","challenge","sentence","definition","bonus","sentence","double","definition","challenge","sentence","bonus","definition","sentence","challenge","definition","sentence"];
+const SPACE_LABELS={start:["★","START"],definition:["?","DEFINITION"],sentence:["✎","SENTENCE"],bonus:["+","BONUS"],challenge:["!","CHALLENGE"],double:["×2","DOUBLE"]};
+const DEFAULT_WORDS=[
+["ancestor","a person in your family who lived a long time ago"],
+["adaptation","a change that helps a living thing survive"],
+["celebrate","to do something special for an important or happy event"],
+["community","a group of people living or working together in the same area"],
+["culture","the ideas, customs, arts, and way of life of a group of people"],
+["evidence","facts or information that help prove something"],
+["folklore","traditional stories and beliefs passed through generations"],
+["heritage","traditions, history, and culture passed down from the past"],
+["migrate","to move from one place to another, often for a long period"],
+["pioneer","a person who is among the first to explore or develop something"],
+["tradition","a custom or belief passed from one generation to another"],
+["belief","something a person thinks is true"],
+["emperor","a ruler of an empire"],
+["region","a particular area of a country or the world"],
+["festival","a special event or celebration"],
+["language","a system people use to communicate with words or signs"],
+["climate","the usual weather conditions of a place over a long time"],
+["habitat","the natural home of a plant or animal"],
+["resource","something useful that people can use"],
+["solution","an answer to a problem"],
+["research","careful study to discover information"],
+["pollution","harmful substances that make air, water, or land dirty"],
+["education","the process of teaching and learning"],
+["inequality","an unfair difference between people or groups"],
+["recycle","to process used materials so they can be used again"]
+];
+const state={teams:[{name:"Blue Team",color:TEAM_COLORS[0],position:0,score:0},{name:"Red Team",color:TEAM_COLORS[1],position:0,score:0}],currentTeam:0,vocab:[...DEFAULT_WORDS],usedIndices:[],currentCard:null,waitingForAnswer:false,rollLocked:false,gameStarted:false,gameDuration:900,remaining:900,timerId:null,target:8,lastRoll:5};
+const $=id=>document.getElementById(id);
+const els={board:$("board"),turnName:$("turnName"),timer:$("timer"),die:$("die"),cardType:$("cardType"),cardMain:$("cardMain"),cardAnswer:$("cardAnswer"),rollBtn:$("rollBtn"),revealBtn:$("revealBtn"),correctBtn:$("correctBtn"),incorrectBtn:$("incorrectBtn"),nextTurnBtn:$("nextTurnBtn"),endGameBtn:$("endGameBtn"),teams:$("teams"),addTeamBtn:$("addTeamBtn"),gameTimeSelect:$("gameTimeSelect"),targetSelect:$("targetSelect"),editWordsBtn:$("editWordsBtn"),resetBoardBtn:$("resetBoardBtn"),newGameBtn:$("newGameBtn"),wordsModal:$("wordsModal"),wordsText:$("wordsText"),cancelWordsBtn:$("cancelWordsBtn"),saveWordsBtn:$("saveWordsBtn"),winnerModal:$("winnerModal"),winnerTitle:$("winnerTitle"),winnerSub:$("winnerSub"),closeWinnerBtn:$("closeWinnerBtn"),playAgainBtn:$("playAgainBtn")};
+
+function buildBoard(){[...els.board.querySelectorAll(".space")].forEach(el=>el.remove());SPACE_LAYOUT.forEach((coord,i)=>{const type=SPACE_TYPES[i];const [icon,label]=SPACE_LABELS[type];const div=document.createElement("div");div.className=`space ${type}`;div.style.gridRow=String(coord[0]+1);div.style.gridColumn=String(coord[1]+1);div.innerHTML=`<div class="space-num">${i}</div><div class="space-icon">${icon}</div><div class="space-title">${label}</div><div class="tokens" id="tokens-${i}"></div>`;els.board.appendChild(div)})}
+function renderTokens(){for(let i=0;i<20;i++){const holder=$(`tokens-${i}`);if(holder)holder.innerHTML=""}state.teams.forEach(team=>{const holder=$(`tokens-${team.position}`);if(!holder)return;const token=document.createElement("span");token.className="token";token.style.background=team.color;token.title=team.name;holder.appendChild(token)})}
+function renderTeams(){els.teams.innerHTML="";state.teams.forEach((team,i)=>{const row=document.createElement("div");row.className="team"+(i===state.currentTeam?" active":"");const dot=document.createElement("span");dot.className="team-dot";dot.style.background=team.color;const input=document.createElement("input");input.className="team-name";input.value=team.name;input.maxLength=18;input.addEventListener("input",()=>{state.teams[i].name=input.value.trim()||`Team ${i+1}`;renderTurn();save()});const score=document.createElement("div");score.className="team-score";score.textContent=team.score;row.append(dot,input,score);els.teams.appendChild(row)})}
+function renderTurn(){const team=state.teams[state.currentTeam];els.turnName.textContent=team.name;els.turnName.style.color=team.color}
+function renderTimer(){els.timer.textContent=formatTime(state.remaining);els.timer.classList.toggle("warning",state.remaining<=60&&state.remaining>20);els.timer.classList.toggle("danger",state.remaining<=20&&state.remaining>0)}
+function renderControls(){els.rollBtn.disabled=state.rollLocked||state.waitingForAnswer;els.revealBtn.disabled=!state.currentCard||state.currentCard.kind!=="definition";els.correctBtn.disabled=!state.waitingForAnswer;els.incorrectBtn.disabled=!state.waitingForAnswer;els.nextTurnBtn.disabled=state.waitingForAnswer||!state.rollLocked}
+function renderAll(){renderTokens();renderTeams();renderTurn();renderTimer();renderControls();save()}
+function formatTime(sec){sec=Math.max(0,Math.floor(sec));return `${Math.floor(sec/60)}:${String(sec%60).padStart(2,"0")}`}
+function startGameTimer(){if(state.gameStarted)return;state.gameStarted=true;clearInterval(state.timerId);state.timerId=setInterval(()=>{state.remaining--;if(state.remaining<=0){state.remaining=0;stopGameTimer();showWinner()}renderTimer();save()},1000)}
+function stopGameTimer(){if(state.timerId){clearInterval(state.timerId);state.timerId=null}}
+function diceChar(n){return ["⚀","⚁","⚂","⚃","⚄","⚅"][n-1]}
+function rollDice(){if(state.rollLocked||state.waitingForAnswer)return;startGameTimer();state.rollLocked=true;els.rollBtn.disabled=true;let ticks=0;const spin=setInterval(()=>{const temp=1+Math.floor(Math.random()*6);els.die.textContent=diceChar(temp);ticks++;if(ticks>=9){clearInterval(spin);const roll=1+Math.floor(Math.random()*6);state.lastRoll=roll;els.die.textContent=diceChar(roll);moveTeam(roll)}},65)}
+function moveTeam(steps){const team=state.teams[state.currentTeam];let moved=0;const interval=setInterval(()=>{const oldPos=team.position;team.position=(team.position+1)%20;if(team.position===0&&oldPos===19)team.score+=1;moved++;renderTokens();renderTeams();if(moved>=steps){clearInterval(interval);resolveSpace(team.position)}},130)}
+function randomVocab(){if(!state.vocab.length)return ["word","a vocabulary word"];if(state.usedIndices.length>=state.vocab.length)state.usedIndices=[];const available=state.vocab.map((_,i)=>i).filter(i=>!state.usedIndices.includes(i));const idx=available[Math.floor(Math.random()*available.length)];state.usedIndices.push(idx);return state.vocab[idx]}
+function resolveSpace(position){const type=SPACE_TYPES[position];const team=state.teams[state.currentTeam];state.currentCard=null;state.waitingForAnswer=false;els.cardAnswer.classList.add("hidden");
+if(type==="start"){els.cardType.textContent="START";els.cardMain.textContent=`${team.name} is on START.`;els.cardAnswer.textContent="Passing START gives +1 point.";state.rollLocked=true}
+else if(type==="bonus"){team.score+=1;els.cardType.textContent="BONUS";els.cardMain.textContent="+1 point!";els.cardAnswer.textContent=`${team.name} gets a free point.`;state.rollLocked=true;checkTarget()}
+else if(type==="definition"){const [word,definition]=randomVocab();state.currentCard={kind:"definition",word,definition,points:1};state.waitingForAnswer=true;els.cardType.textContent="DEFINITION CARD · 1 POINT";els.cardMain.textContent=definition;els.cardAnswer.textContent=`Answer: ${word}`}
+else if(type==="sentence"){const [word]=randomVocab();state.currentCard={kind:"sentence",word,points:1};state.waitingForAnswer=true;els.cardType.textContent="SENTENCE CARD · 1 POINT";els.cardMain.textContent=`Use "${word}" correctly in a sentence.`;els.cardAnswer.textContent="Teacher decides if the sentence is correct.";els.cardAnswer.classList.remove("hidden")}
+else if(type==="challenge"){const [word,definition]=randomVocab();const definitionMode=Math.random()<.5;state.currentCard={kind:definitionMode?"definition":"sentence",word,definition,points:2};state.waitingForAnswer=true;els.cardType.textContent="CHALLENGE · 2 POINTS";els.cardMain.textContent=definitionMode?definition:`Use "${word}" correctly in a detailed sentence.`;els.cardAnswer.textContent=definitionMode?`Answer: ${word}`:"Teacher decides if the sentence is correct.";if(!definitionMode)els.cardAnswer.classList.remove("hidden")}
+else if(type==="double"){const [word,definition]=randomVocab();state.currentCard={kind:"definition",word,definition,points:2};state.waitingForAnswer=true;els.cardType.textContent="DOUBLE POINTS · 2 POINTS";els.cardMain.textContent=definition;els.cardAnswer.textContent=`Answer: ${word}`}
+renderAll()}
+function revealAnswer(){if(state.currentCard)els.cardAnswer.classList.toggle("hidden")}
+function answer(correct){if(!state.waitingForAnswer||!state.currentCard)return;const team=state.teams[state.currentTeam];const points=state.currentCard.points||1;if(correct){team.score+=points;els.cardType.textContent="CORRECT!";els.cardMain.textContent=`+${points} point${points===1?"":"s"} for ${team.name}`}else{els.cardType.textContent="NO POINT";els.cardMain.textContent="No points this turn."}els.cardAnswer.classList.add("hidden");state.waitingForAnswer=false;state.currentCard=null;state.rollLocked=true;renderAll();if(correct)checkTarget()}
+function nextTurn(){if(state.waitingForAnswer)return;state.currentTeam=(state.currentTeam+1)%state.teams.length;state.rollLocked=false;state.currentCard=null;els.cardType.textContent="Next Turn";els.cardMain.textContent=`${state.teams[state.currentTeam].name}, roll the dice.`;els.cardAnswer.classList.add("hidden");renderAll()}
+function checkTarget(){const team=state.teams[state.currentTeam];if(team.score>=state.target)setTimeout(showWinner,250)}
+function showWinner(){stopGameTimer();const sorted=[...state.teams].sort((a,b)=>b.score-a.score);const top=sorted[0].score;const winners=sorted.filter(t=>t.score===top);els.winnerTitle.textContent=winners.length===1?`${winners[0].name} wins!`:"It's a tie!";els.winnerSub.textContent=sorted.map(t=>`${t.name}: ${t.score}`).join("  •  ");els.winnerModal.classList.add("show")}
+function addTeam(){if(state.teams.length>=6)return;const i=state.teams.length;state.teams.push({name:`Team ${i+1}`,color:TEAM_COLORS[i],position:0,score:0});renderAll()}
+function resetBoard(){state.teams.forEach(t=>t.position=0);state.currentTeam=0;state.rollLocked=false;state.waitingForAnswer=false;state.currentCard=null;els.cardType.textContent="Board Reset";els.cardMain.textContent="All pieces returned to START.";els.cardAnswer.classList.add("hidden");renderAll()}
+function newGame(){if(!confirm("Start a new game and reset all scores?"))return;stopGameTimer();state.teams.forEach(t=>{t.position=0;t.score=0});state.currentTeam=0;state.gameStarted=false;state.remaining=state.gameDuration;state.rollLocked=false;state.waitingForAnswer=false;state.currentCard=null;state.usedIndices=[];state.lastRoll=5;els.die.textContent=diceChar(5);els.cardType.textContent="Ready to play";els.cardMain.textContent="Roll the dice to begin.";els.cardAnswer.classList.add("hidden");els.winnerModal.classList.remove("show");renderAll()}
+function parseVocab(text){const out=[];const seen=new Set();text.split("\n").forEach(line=>{const trimmed=line.trim();if(!trimmed)return;const split=trimmed.split("|");if(split.length<2)return;const word=split.shift().trim();const definition=split.join("|").trim();if(!word||!definition)return;const key=word.toLowerCase();if(!seen.has(key)&&out.length<300){seen.add(key);out.push([word,definition])}});return out}
+function openVocab(){els.wordsText.value=state.vocab.map(([w,d])=>`${w} | ${d}`).join("\n");els.wordsModal.classList.add("show")}
+function saveVocab(){const parsed=parseVocab(els.wordsText.value);if(!parsed.length){alert("Please add at least one valid word using: word | definition");return}state.vocab=parsed;state.usedIndices=[];els.wordsModal.classList.remove("show");save()}
+function save(){try{localStorage.setItem("word-quest-board-state",JSON.stringify({teams:state.teams,currentTeam:state.currentTeam,vocab:state.vocab,usedIndices:state.usedIndices,gameDuration:state.gameDuration,remaining:state.remaining,target:state.target,gameStarted:false}))}catch(e){}}
+function load(){try{const raw=localStorage.getItem("word-quest-board-state");if(!raw)return false;const s=JSON.parse(raw);if(!Array.isArray(s.teams)||s.teams.length<2)return false;state.teams=s.teams.slice(0,6);state.currentTeam=Math.min(Number(s.currentTeam)||0,state.teams.length-1);state.vocab=Array.isArray(s.vocab)&&s.vocab.length?s.vocab:[...DEFAULT_WORDS];state.usedIndices=Array.isArray(s.usedIndices)?s.usedIndices:[];state.gameDuration=Number(s.gameDuration)||900;state.remaining=Math.max(0,Number(s.remaining)||state.gameDuration);state.target=Number(s.target)||8;state.gameStarted=false;state.rollLocked=false;state.waitingForAnswer=false;state.currentCard=null;els.gameTimeSelect.value=String(state.gameDuration);els.targetSelect.value=String(state.target);return true}catch(e){return false}}
+
+els.rollBtn.addEventListener("click",rollDice);els.revealBtn.addEventListener("click",revealAnswer);els.correctBtn.addEventListener("click",()=>answer(true));els.incorrectBtn.addEventListener("click",()=>answer(false));els.nextTurnBtn.addEventListener("click",nextTurn);els.endGameBtn.addEventListener("click",showWinner);els.addTeamBtn.addEventListener("click",addTeam);els.resetBoardBtn.addEventListener("click",resetBoard);els.newGameBtn.addEventListener("click",newGame);els.editWordsBtn.addEventListener("click",openVocab);els.cancelWordsBtn.addEventListener("click",()=>els.wordsModal.classList.remove("show"));els.saveWordsBtn.addEventListener("click",saveVocab);els.closeWinnerBtn.addEventListener("click",()=>els.winnerModal.classList.remove("show"));els.playAgainBtn.addEventListener("click",newGame);
+els.gameTimeSelect.addEventListener("change",()=>{stopGameTimer();state.gameDuration=Number(els.gameTimeSelect.value)||900;state.remaining=state.gameDuration;state.gameStarted=false;renderTimer();save()});els.targetSelect.addEventListener("change",()=>{state.target=Number(els.targetSelect.value)||8;save()});
+els.wordsModal.addEventListener("click",e=>{if(e.target===els.wordsModal)els.wordsModal.classList.remove("show")});els.winnerModal.addEventListener("click",e=>{if(e.target===els.winnerModal)els.winnerModal.classList.remove("show")});
+document.addEventListener("keydown",e=>{const tag=document.activeElement?.tagName;if(tag==="INPUT"||tag==="TEXTAREA"||tag==="SELECT")return;if(e.code==="Space"){e.preventDefault();rollDice()}if(e.key==="c"||e.key==="C")answer(true);if(e.key==="x"||e.key==="X")answer(false);if(e.key==="n"||e.key==="N")nextTurn()});
+buildBoard();if(!load())state.vocab=[...DEFAULT_WORDS];renderAll();
+})();
+</script>
+</body>
+</html>

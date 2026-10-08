@@ -380,7 +380,7 @@ h1{margin:0;font-size:clamp(1.35rem,2.2vw,2rem)}
 }
 </style>
 </head>
-<body>
+<body data-game-title="Memory Match" data-game-subtitle="Find every matching pair" data-game-icon="🧠">
 
 <button class="side-nav-handle" id="sideNavHandle" type="button" aria-label="Open navigation" aria-expanded="false"><span>Menu</span></button>
 <div class="side-nav-backdrop" id="sideNavBackdrop"></div>
@@ -395,7 +395,7 @@ h1{margin:0;font-size:clamp(1.35rem,2.2vw,2rem)}
   <div class="side-nav-menu">
     <button class="side-nav-item" id="importGroupBtn" type="button"><span class="nav-glyph">👥</span><span>Import Group<small>Load a saved class or group</small></span></button>
     <button class="side-nav-item" id="importListBtn" type="button"><span class="nav-glyph">📋</span><span>Import List<small>Load a custom matching list</small></span></button>
-    <button class="side-nav-item" id="goBackBtn" type="button"><span class="nav-glyph">←</span><span>Go Back<small>Return to the games page</small></span></button>
+    <a class="side-nav-item" id="goBackBtn" href="../index.html#games"><span class="nav-glyph">←</span><span>Go Back<small>Return to the games page</small></span></a>
   </div>
 </aside>
 
@@ -874,12 +874,17 @@ sideNavHandle.addEventListener("click",openSideNav);
 sideNavClose.addEventListener("click",closeSideNav);
 sideNavBackdrop.addEventListener("click",closeSideNav);
 document.addEventListener("keydown",e=>{if(e.key==="Escape")closeSideNav();});
-importListBtn.addEventListener("click",()=>{closeSideNav();alert("Import List can be connected to your list import system here.");});
-goBackBtn.addEventListener("click",()=>{window.location.href="../index.html#games";});
-
 newGameBtn.addEventListener("click",newGame);
 playAgainBtn.addEventListener("click",newGame);
 window.addEventListener("resize", fitBoardToViewport);
+window.addEventListener("game-nav:import-list", event => {
+  const imported = Array.isArray(event.detail?.words) ? event.detail.words.map(String).map(value => value.trim()).filter(Boolean).slice(0,15) : [];
+  if(!imported.length) return;
+  PAIRS.splice(0, PAIRS.length, ...imported.map(value => ({a:{type:"text",content:value},b:{type:"text",content:value}})));
+  selectedPairCount = Math.min(6, PAIRS.length);
+  pairCountTop.textContent = String(selectedPairCount);
+  newGame();
+});
 
 newGame();
 fitBoardToViewport();

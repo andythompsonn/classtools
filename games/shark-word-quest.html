@@ -121,6 +121,7 @@ document.addEventListener('keydown',e=>{
 });
 hintToggle.addEventListener('click',()=>{const showing=!hintEl.hidden;hintEl.hidden=showing;hintToggle.textContent=showing?'Show Hint':'Hide Hint';hintToggle.setAttribute('aria-expanded',showing?'false':'true')});
 document.getElementById('newWord').addEventListener('click',choose);
+window.addEventListener('game-nav:import-list',event=>{const imported=Array.isArray(event.detail?.words)?event.detail.words.map(value=>String(value).toUpperCase().replace(/[^A-Z ]/g,'').trim()).filter(Boolean):[];if(!imported.length)return;WORDS.splice(0,WORDS.length,...imported.map(word=>({word,hint:'Imported from your word list.'})));choose();});
 choose();
 })();
 </script>

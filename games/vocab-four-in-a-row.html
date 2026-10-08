@@ -4,6 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Vocab Four in a Row</title>
+<link rel="stylesheet" href="game-nav.css">
 <style>
   :root{
     --bg1:#181a31;
@@ -401,7 +402,7 @@
   }
 </style>
 </head>
-<body>
+<body data-game-title="Vocab Four in a Row" data-game-subtitle="Vocabulary team challenge" data-game-icon="🔴">
 <div class="app">
   <div class="topbar">
     <div class="brand">
@@ -768,6 +769,11 @@ inquiry</textarea>
   $("setupBtn").addEventListener("click", () => $("setupModal").classList.add("show"));
   $("closeSetupBtn").addEventListener("click", () => $("setupModal").classList.remove("show"));
   $("resetBtn").addEventListener("click", newRound);
+  window.addEventListener("game-nav:import-list", event => {
+    const imported = Array.isArray(event.detail?.words) ? event.detail.words.map(String).map(value => value.trim()).filter(Boolean) : [];
+    if (!imported.length) return;
+    $("wordsInput").value = imported.join("\n"); state.words = makeWordList(); newRound();
+  });
 
   state.words = makeWordList();
   updateScore();
@@ -775,5 +781,6 @@ inquiry</textarea>
   renderBoard();
 })();
 </script>
+<script src="game-nav.js"></script>
 </body>
 </html>

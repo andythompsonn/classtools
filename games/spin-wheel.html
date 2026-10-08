@@ -256,6 +256,7 @@ Luna</textarea>
   }
 
   entriesBox.addEventListener('input',()=>{if(!spinning){lastWinner=null;winnerEl.textContent='—';removeBtn.disabled=true;status.textContent='';drawWheel();}});
+  window.addEventListener('game-nav:import-list',event=>{const imported=Array.isArray(event.detail?.words)?event.detail.words.map(String).map(value=>value.trim()).filter(Boolean).slice(0,80):[];if(!imported.length)return;entriesBox.value=imported.join('\n');lastWinner=null;winnerEl.textContent='—';removeBtn.disabled=true;status.textContent=`${imported.length} items imported.`;drawWheel();});
   spinBtn.addEventListener('click',spin);shuffleBtn.addEventListener('click',shuffle);removeBtn.addEventListener('click',removeWinner);
   drawWheel();
 })();
